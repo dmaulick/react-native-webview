@@ -136,6 +136,8 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
     );
   };
 
+
+  //  #2 - imperative
   postMessage = (data: string) => {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
@@ -174,6 +176,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
    * on pages with a Content Security Policy that disallows eval(). If you need that
    * functionality, look into postMessage/onMessage.
    */
+  // #3 - imperative
   injectJavaScript = (data: string) => {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
@@ -202,6 +205,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   };
 
   onLoadingStart = (event: WebViewNavigationEvent) => {
+    //  #5 - prop
     const { onLoadStart } = this.props;
     const { nativeEvent: { url } } = event;
     this.startUrl = url;
@@ -213,6 +217,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
 
   onLoadingError = (event: WebViewErrorEvent) => {
     event.persist(); // persist this event because we need to store it
+    //  #7 - prop
     const { onError, onLoadEnd } = this.props;
     if (onError) {
       onError(event);
@@ -231,6 +236,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
     });
   };
 
+  // #9 - jsx prop
   onHttpError = (event: WebViewHttpErrorEvent) => {
     const { onHttpError } = this.props;
     if (onHttpError) {
@@ -246,6 +252,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   }
 
   onLoadingFinish = (event: WebViewNavigationEvent) => {
+    //  #6 - prop
     const { onLoad, onLoadEnd } = this.props;
     const { nativeEvent: { url } } = event;
     if (onLoad) {
@@ -262,6 +269,8 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
     this.updateNavigationState(event);
   };
 
+
+  // #4 - prop -> callback for webview JS calling window.ReactNativeWebView.postMessage
   onMessage = (event: WebViewMessageEvent) => {
     const { onMessage } = this.props;
     if (onMessage) {
@@ -270,6 +279,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   };
 
   onLoadingProgress = (event: WebViewProgressEvent) => {
+    //  #8 - prop
     const { onLoadProgress } = this.props;
     const { nativeEvent: { progress } } = event;
     if (progress === 1) {
@@ -308,6 +318,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
       originWhitelist,
       renderError,
       renderLoading,
+      //  #1 - prop
       source,
       style,
       containerStyle,

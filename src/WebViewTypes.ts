@@ -357,6 +357,7 @@ export interface IOSNativeWebViewProps extends CommonNativeWebViewProps {
   pagingEnabled?: boolean;
   scrollEnabled?: boolean;
   useSharedProcessPool?: boolean;
+  //  #10 - redherring - only iOS
   onContentProcessDidTerminate?: (event: WebViewTerminatedEvent) => void;
   injectedJavaScriptForMainFrameOnly?: boolean;
   injectedJavaScriptBeforeContentLoadedForMainFrameOnly?: boolean;
