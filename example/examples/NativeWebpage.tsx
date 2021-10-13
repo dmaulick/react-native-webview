@@ -3,8 +3,8 @@ import {View} from 'react-native';
 
 import WebView from 'react-native-webview';
 
-interface Props {}
-interface State {}
+type Props = {};
+type State = {};
 
 export default class NativeWebpage extends Component<Props, State> {
   state = {};
@@ -15,7 +15,6 @@ export default class NativeWebpage extends Component<Props, State> {
         <WebView
           source={{uri: 'https://infinite.red'}}
           style={{width: '100%', height: '100%'}}
-          nestedScrollEnabled
           // setSupportMultipleWindows={false}
         />
       </View>
