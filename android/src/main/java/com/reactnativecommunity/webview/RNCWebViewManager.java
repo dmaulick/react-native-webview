@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -122,16 +121,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     return REACT_CLASS;
   }
 
-  @Override
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
-    Log.d(TAG, "createViewInstance: HEEELOOOOO test 3");
-    ReactContext baseReactContext = reactContext;
+  private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
 
-
-    RNCWebView webView = new RNCWebView(reactContext);
-    setupWebChromeClient(baseReactContext, webView);
-    ((ReactContext) baseReactContext).addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
 
 //    WebSetting default settings
@@ -161,8 +152,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     webView.setDownloadListener(new DownloadListener() {
       public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
         webView.setIgnoreErrFailedForThisURL(url);
-
-        RNCWebViewModule module = getModule(baseReactContext);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
@@ -196,6 +185,21 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       }
     });
+
+  }
+
+  @Override
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  protected WebView createViewInstance(ThemedReactContext reactContext) {
+
+    RNCWebView webView = new RNCWebView(reactContext);
+    // They had before webView config - so we leave that order
+    setupWebChromeClient(reactContext, webView);
+    reactContext.addLifecycleEventListener(webView);
+
+    // New to enable having configureRNCWebView
+    RNCWebViewModule module = getModule(reactContext);
+    configureRNCWebView(webView, module);
 
     return webView;
   }

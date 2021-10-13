@@ -326,7 +326,7 @@ public class RNCWebView extends WebView implements LifecycleEventListener {
   }
 
   // What is used as the bridge (or interface) between the core WebView
-  // Only created by `setMessagingEnabled`
+  // Only triggered by `setMessagingEnabled`
   protected class RNCWebViewBridge {
     RNCWebView mContext;
 
