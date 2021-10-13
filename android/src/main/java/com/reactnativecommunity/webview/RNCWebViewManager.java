@@ -51,6 +51,7 @@ import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
 
 import com.facebook.common.logging.FLog;
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 import com.facebook.react.views.scroll.ScrollEvent;
@@ -175,25 +176,27 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     return REACT_CLASS;
   }
 
-  protected RNCWebView createRNCWebViewInstance(ThemedReactContext reactContext) {
-    return new RNCWebView(reactContext);
-  }
-
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
-    RNCWebView webView = createRNCWebViewInstance(reactContext);
-    setupWebChromeClient(reactContext, webView);
-    reactContext.addLifecycleEventListener(webView);
+    Log.d(TAG, "createViewInstance: HEEELOOOOO test 3");
+    ReactContext baseReactContext = reactContext;
+
+
+    RNCWebView webView = new RNCWebView(reactContext);
+    setupWebChromeClient(baseReactContext, webView);
+    ((ReactContext) baseReactContext).addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
+
+//    WebSetting default settings
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
     settings.setDisplayZoomControls(false);
     settings.setDomStorageEnabled(true);
     settings.setSupportMultipleWindows(true);
-
     settings.setAllowFileAccess(false);
     settings.setAllowContentAccess(false);
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
       settings.setAllowFileAccessFromFileURLs(false);
       setAllowUniversalAccessFromFileURLs(webView, false);
@@ -213,7 +216,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
         webView.setIgnoreErrFailedForThisURL(url);
 
-        RNCWebViewModule module = getModule(reactContext);
+        RNCWebViewModule module = getModule(baseReactContext);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
@@ -1481,7 +1484,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
      * Activity Context is required for creation of dialogs internally by WebView
      * Reactive Native needed for access to ReactNative internal system functionality
      */
-    public RNCWebView(ThemedReactContext reactContext) {
+    public RNCWebView(ReactContext reactContext) {
       super(reactContext);
       this.createCatalystInstance();
       progressChangedFilter = new ProgressChangedFilter();
