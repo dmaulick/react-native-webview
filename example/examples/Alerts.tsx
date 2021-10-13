@@ -53,8 +53,8 @@ const HTML = `
 </html>
 `;
 
-type Props = {};
-type State = {};
+interface Props {}
+interface State {}
 
 export default class Alerts extends Component<Props, State> {
   state = {};

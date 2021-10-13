@@ -15,14 +15,12 @@ public class RNCWebViewPackage: ReactPackage {
     Log.d(TAG, "createNativeModules")
 
     if (!this::viewManagerSingleton.isInitialized) {
-      reactContext.runOnUiQueueThread(java.lang.Runnable {
-        viewManagerSingleton = RNCWebViewManager(reactContext);
-      })
+      viewManagerSingleton = RNCWebViewManager(reactContext);
     }
 
     // same as before:
     return listOf(
-      RNCWebViewModule(reactContext)
+      RNCWebViewModule(reactContext, viewManagerSingleton)
     );
   }
 

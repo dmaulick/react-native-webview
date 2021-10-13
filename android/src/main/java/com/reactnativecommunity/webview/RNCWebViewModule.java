@@ -1,5 +1,7 @@
 package com.reactnativecommunity.webview;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.DownloadManager;
@@ -9,20 +11,21 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.util.Log;
+import android.webkit.MimeTypeMap;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.util.Pair;
-
-import android.util.Log;
-import android.webkit.MimeTypeMap;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.widget.Toast;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Promise;
@@ -40,8 +43,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static android.app.Activity.RESULT_OK;
-
 @ReactModule(name = RNCWebViewModule.MODULE_NAME)
 public class RNCWebViewModule extends ReactContextBaseJavaModule implements ActivityEventListener {
   public static final String MODULE_NAME = "RNCWebView";
@@ -53,6 +54,10 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
   private File outputImage;
   private File outputVideo;
   private DownloadManager.Request downloadRequest;
+
+  private RNCWebViewManager mRNCWebViewManager;
+  // This is bad - holding context here may cause memory leaks
+  private ReactApplicationContext mReactContext;
 
   protected static class ShouldOverrideUrlLoadingLock {
     protected enum ShouldOverrideCallbackState {
@@ -115,14 +120,44 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
     }
   };
 
-  public RNCWebViewModule(ReactApplicationContext reactContext) {
+  public RNCWebViewModule(ReactApplicationContext reactContext, RNCWebViewManager rncWebViewManager) {
     super(reactContext);
     reactContext.addActivityEventListener(this);
+    mReactContext = reactContext;
+    mRNCWebViewManager = rncWebViewManager;
   }
 
   @Override
   public String getName() {
     return MODULE_NAME;
+  }
+
+
+
+  @ReactMethod
+  public void eagerInitRNCWebViewManager() {
+    Log.d(RNCWebViewManager.TAG, "eagerInitRNCWebViewManager: ");
+
+    // One option that may be more flexible:
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
+      @Override
+      public void run() {
+        Log.d(RNCWebViewManager.TAG, "Handler(Looper.getMainLooper() in eagerInitRNCWebViewManager");
+        mRNCWebViewManager.eagerlyCreateViewInstance(mReactContext);
+      }
+    });
+
+
+    // Another option - try with ReactContext
+    // But
+    //  1. I think there is a delay before ReactContext has access to UI thread (mIsInitialized in ReactContext for reference)
+    //  2. we don't actually want to hold a reference to mReactContext I don't think
+//    mReactContext.runOnUiQueueThread(new Runnable() {
+//      public void run() {
+//        Log.d(RNCWebViewManager.TAG, "runOnUiQueueThread in eagerInitRNCWebViewManager");
+//        mRNCWebViewManager.eagerlyCreateViewInstance(mReactContext);
+//      }
+//    });
   }
 
   @ReactMethod

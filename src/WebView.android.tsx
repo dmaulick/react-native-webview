@@ -185,6 +185,16 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
     );
   };
 
+  // One idea, but cannot do this because
+  // Cannot do this because we will not have a ref to the React component:
+  // eagerlyStartWebView = () => {
+  //   UIManager.dispatchViewManagerCommand(
+  //     this.getWebViewHandle(),
+  //     this.getCommands().injectJavaScript,
+  //     [],
+  //   );
+  // }
+
   /**
    * Injects a javascript string into the referenced WebView. Deliberately does not
    * return a response because using eval() to return a response breaks this method

@@ -107,14 +107,16 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mUserAgent = null;
   protected @Nullable String mUserAgentWithApplicationName = null;
 
+  private RNCWebView mRNCWebView;
+
   public RNCWebViewManager() {
     Log.d(TAG, "RNCWebViewManager: ");
   }
 
 
   public RNCWebViewManager(ReactContext reactContext) {
+    super(); // SimpleViewManager is abstract so we should likely remove
     Log.d(TAG, "RNCWebViewManager: ");
-    eagerlyCreateViewInstance(reactContext);
   }
 
   @Override
@@ -126,15 +128,21 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
-    Log.d(TAG, "createViewInstance: ");
-    return eagerlyCreateViewInstance(reactContext);
+    Log.d(TAG, "\ncreateViewInstance: ");
+    if (mRNCWebView == null) {
+      Log.d(TAG, "createViewInstance: mRNCWebView == NULL");
+      eagerlyCreateViewInstance(reactContext);
+    } else {
+      Log.d(TAG, "createViewInstance: mRNCWebView != NULL");
+    }
+    return mRNCWebView;
   }
 
 
   // Now portable to anywhere with ReactContext
-  public RNCWebView eagerlyCreateViewInstance(ReactContext reactContext) {
-    Log.d(TAG, "eagerlyCreateViewInstance: ");
+  public void eagerlyCreateViewInstance(ReactContext reactContext) {
     RNCWebView webView = new RNCWebView(reactContext);
+    Log.d(TAG, "\neagerlyCreateViewInstance: ");
     // They had before webView config - so we leave that order
     setupWebChromeClient(reactContext, webView);
     reactContext.addLifecycleEventListener(webView);
@@ -143,7 +151,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     RNCWebViewModule module = getModule(reactContext);
     configureRNCWebView(webView, module);
 
-    return webView;
+    // doing this is prob temp because we need to keep track of multiple webViews - easily breaks with example
+    // Worth doing right now to test eager load
+    mRNCWebView = webView;
   }
 
   private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
@@ -732,6 +742,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   public void onDropViewInstance(WebView webView) {
+    // TODO: figure out how to identify these views!
     Log.d(TAG, "onDropViewInstance: ");
     super.onDropViewInstance(webView);
     ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
