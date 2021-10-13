@@ -177,10 +177,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   }
 
-  @Override
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
-
+  // Now portable to anywhere with ReactContext
+  public RNCWebView eagerlyCreateViewInstance(ReactContext reactContext) {
     RNCWebView webView = new RNCWebView(reactContext);
     // They had before webView config - so we leave that order
     setupWebChromeClient(reactContext, webView);
@@ -191,6 +189,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     configureRNCWebView(webView, module);
 
     return webView;
+  }
+
+  @Override
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  protected WebView createViewInstance(ThemedReactContext reactContext) {
+    return eagerlyCreateViewInstance(reactContext);
   }
 
   @ReactProp(name = "javaScriptEnabled")
@@ -700,6 +704,10 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     return reactContext.getNativeModule(RNCWebViewModule.class);
   }
 
+  // Last function here is configuring the ChromeClient
+  // 1. sets mWebChromeClient
+  // 2. webView.setWebChromeClient(mWebChromeClient);
+  // ^ just configures it differently depending on mAllowsFullscreenVideo
   protected void setupWebChromeClient(ReactContext reactContext, WebView webView) {
     if (mAllowsFullscreenVideo) {
       int initialRequestedOrientation = reactContext.getCurrentActivity().getRequestedOrientation();
