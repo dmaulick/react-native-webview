@@ -34,7 +34,6 @@ import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEven
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RNCWebViewClient extends WebViewClient {
-  private static final String TAG = "RNCWebViewClient";
   protected static final int SHOULD_OVERRIDE_URL_LOADING_TIMEOUT = 250;
 
   protected boolean mLastLoadFailed = false;
@@ -100,7 +99,7 @@ public class RNCWebViewClient extends WebViewClient {
           final long startTime = SystemClock.elapsedRealtime();
           while (lockObject.get() == RNCWebViewModule.ShouldOverrideUrlLoadingLock.ShouldOverrideCallbackState.UNDECIDED) {
             if (SystemClock.elapsedRealtime() - startTime > SHOULD_OVERRIDE_URL_LOADING_TIMEOUT) {
-              FLog.w(TAG, "Did not receive response to shouldOverrideUrlLoading in time, defaulting to allow loading.");
+              FLog.w(RNCWebViewManager.TAG, "Did not receive response to shouldOverrideUrlLoading in time, defaulting to allow loading.");
               RNCWebViewModule.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
               return false;
             }
@@ -108,7 +107,7 @@ public class RNCWebViewClient extends WebViewClient {
           }
         }
       } catch (InterruptedException e) {
-        FLog.e(TAG, "shouldOverrideUrlLoading was interrupted while waiting for result.", e);
+        FLog.e(RNCWebViewManager.TAG, "shouldOverrideUrlLoading was interrupted while waiting for result.", e);
         RNCWebViewModule.shouldOverrideUrlLoadingLock.removeLock(lockIdentifier);
         return false;
       }
@@ -118,7 +117,7 @@ public class RNCWebViewClient extends WebViewClient {
 
       return shouldOverride;
     } else {
-      FLog.w(TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
+      FLog.w(RNCWebViewManager.TAG, "Couldn't use blocking synchronous call for onShouldStartLoadWithRequest due to debugging or missing Catalyst instance, falling back to old event-and-load.");
       progressChangedFilter.setWaitingForCommandLoadUrl(true);
       ((RNCWebView) view).dispatchEvent(
         view,

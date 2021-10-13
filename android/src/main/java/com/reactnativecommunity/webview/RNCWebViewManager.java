@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -75,7 +76,8 @@ import java.util.Map;
  */
 @ReactModule(name = RNCWebViewManager.REACT_CLASS)
 public class RNCWebViewManager extends SimpleViewManager<WebView> {
-  private static final String TAG = "RNCWebViewManager";
+
+  public static final String TAG = "RNCWebView";
 
   public static final int COMMAND_GO_BACK = 1;
   public static final int COMMAND_GO_FORWARD = 2;
@@ -114,6 +116,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
 
+    Log.d(TAG, "configureRNCWebView: ");
 //    WebSetting default settings
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
@@ -179,6 +182,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   // Now portable to anywhere with ReactContext
   public RNCWebView eagerlyCreateViewInstance(ReactContext reactContext) {
+    Log.d(TAG, "eagerlyCreateViewInstance: ");
     RNCWebView webView = new RNCWebView(reactContext);
     // They had before webView config - so we leave that order
     setupWebChromeClient(reactContext, webView);
@@ -194,6 +198,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
+    Log.d(TAG, "createViewInstance: ");
     return eagerlyCreateViewInstance(reactContext);
   }
 
@@ -305,6 +310,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @ReactProp(name = "nestedScrollEnabled")
   public void setNestedScrollEnabled(WebView view, boolean enabled) {
+    Log.d(TAG, "setNestedScrollEnabled: ");
     ((RNCWebView) view).setNestedScrollEnabled(enabled);
   }
 
@@ -393,6 +399,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @ReactProp(name = "injectedJavaScript")
   public void setInjectedJavaScript(WebView view, @Nullable String injectedJavaScript) {
+    Log.d(TAG, "setInjectedJavaScript: ");
     ((RNCWebView) view).setInjectedJavaScript(injectedJavaScript);
   }
 
@@ -449,6 +456,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @ReactProp(name = "source")
   public void setSource(WebView view, @Nullable ReadableMap source) {
+    Log.d(TAG, "setSource: ");
     if (source != null) {
       if (source.hasKey("html")) {
         String html = source.getString("html");
@@ -592,9 +600,20 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
   }
 
+
+  /**
+   * From RN source code on ViewManger.addEventEmitters:
+   *
+   * Subclasses can override this method to install custom event emitters on the given View. You
+   * might want to override this method if your view needs to emit events besides basic touch events
+   * to JS (e.g. scroll events).
+   */
   @Override
   protected void addEventEmitters(ThemedReactContext reactContext, WebView view) {
+    Log.d(TAG, "addEventEmitters: ");
     // Do not register default touch emitter and let WebView implementation handle touches
+
+    // Webview.setWebViewClient - https://developer.android.com/reference/android/webkit/WebView#setWebViewClient(android.webkit.WebViewClient)
     view.setWebViewClient(new RNCWebViewClient());
   }
 
@@ -609,12 +628,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     export.put(ScrollEventType.getJSEventName(ScrollEventType.SCROLL), MapBuilder.of("registrationName", "onScroll"));
     export.put(TopHttpErrorEvent.EVENT_NAME, MapBuilder.of("registrationName", "onHttpError"));
     export.put(TopRenderProcessGoneEvent.EVENT_NAME, MapBuilder.of("registrationName", "onRenderProcessGone"));
+
+    Log.d(TAG, "getExportedCustomDirectEventTypeConstants:");
     return export;
   }
 
   @Override
   public @Nullable
   Map<String, Integer> getCommandsMap() {
+    Log.d(TAG, "getCommandsMap: ");
     return MapBuilder.<String, Integer>builder()
       .put("goBack", COMMAND_GO_BACK)
       .put("goForward", COMMAND_GO_FORWARD)
@@ -632,6 +654,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   public void receiveCommand(WebView root, int commandId, @Nullable ReadableArray args) {
+    Log.d(TAG, "receiveCommand: " + commandId + args.toString());
     switch (commandId) {
       case COMMAND_GO_BACK:
         root.goBack();
@@ -694,6 +717,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   public void onDropViewInstance(WebView webView) {
+    Log.d(TAG, "onDropViewInstance: ");
     super.onDropViewInstance(webView);
     ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
