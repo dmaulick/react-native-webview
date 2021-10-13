@@ -33,6 +33,21 @@ import {
   RNCWebViewUIManagerAndroid,
 } from './WebViewTypes';
 
+/**
+ * 
+ * Initialize needs:
+ * P0
+ * 1. Source - to load trading view
+ * 2. injectMessage - imperative method - sends javascript to webview (find in useInjectFunction)
+ * 3. PostMessage - imperative method - mostly used to send JSON to webview wiht tv events
+ * 4. onMessage - 
+ * P1
+ * 5. onLoadStart - which will indicate that view has started to load
+ * 6. onLoad or onLoadEnd (whichever works) - when it finishes loading
+ * 7. onHttpError - useful for knowing if something is wrong
+ * 
+ */
+
 import styles from './WebView.styles';
 
 const UIManager = NotTypedUIManager as RNCWebViewUIManagerAndroid;
