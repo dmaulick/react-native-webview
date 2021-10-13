@@ -104,13 +104,14 @@ const TESTS = {
   }
 };
 
-type Props = {};
-type State = {restarting: boolean; currentTest: Object};
+interface Props {}
+interface State {restarting: boolean; currentTest: Object}
 
 export default class App extends Component<Props, State> {
   state = {
     restarting: false,
     currentTest: TESTS.Alerts,
+    showContent: true,
   };
 
   _simulateRestart = () => {
@@ -121,97 +122,120 @@ export default class App extends Component<Props, State> {
     this.setState({currentTest: TESTS[testName]});
   };
 
+  _toggleContent = () => {
+    const newVal = !this.state.showContent;
+    console.log('newVal', newVal)
+    this.setState({showContent: newVal});
+  }
+
   render() {
-    const {restarting, currentTest} = this.state;
+    const {restarting, currentTest, showContent} = this.state;
     return (
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity
-          style={styles.closeKeyboardView}
-          onPress={() => Keyboard.dismiss()}
-          testID="closeKeyboard"
-        />
 
         <TouchableOpacity
-          testID="restart_button"
-          onPress={this._simulateRestart}
+          testID="hideUnhideContent"
+          onPress={this._toggleContent}
           style={styles.restartButton}
           activeOpacity={0.6}>
-          <Text>Simulate Restart</Text>
+          <Text>Toggle Content visibility</Text>
         </TouchableOpacity>
+        {
+          showContent ? null : (
+            <>
 
-        <View style={styles.testPickerContainer}>
-          <Button
-            testID="testType_alerts"
-            title="Alerts"
-            onPress={() => this._changeTest('Alerts')}
-          />
-          <Button
-            testID="testType_scrolling"
-            title="Scrolling"
-            onPress={() => this._changeTest('Scrolling')}
-          />
-          <Button
-            testID="testType_background"
-            title="Background"
-            onPress={() => this._changeTest('Background')}
-          />
-          <Button
-            testID="testType_injection"
-            title="Injection"
-            onPress={() => this._changeTest('Injection')}
-          />
-          <Button
-            testID="testType_pageLoad"
-            title="LocalPageLoad"
-            onPress={() => this._changeTest('PageLoad')}
-          />
-          {Platform.OS == 'ios' && (
-            <Button
-              testID="testType_downloads"
-              title="Downloads"
-              onPress={() => this._changeTest('Downloads')}
-            />
-          )}
-          {Platform.OS === 'android' && (
-            <Button
-              testID="testType_uploads"
-              title="Uploads"
-              onPress={() => this._changeTest('Uploads')}
-            />
-          )}
-          <Button
-            testID="testType_messaging"
-            title="Messaging"
-            onPress={() => this._changeTest('Messaging')}
-          />
-          <Button
-            testID="testType_nativeWebpage"
-            title="NativeWebpage"
-            onPress={() => this._changeTest('NativeWebpage')}
-          />
-          {Platform.OS === 'ios' && (
-              <Button
-                  testID="testType_applePay"
-                  title="ApplePay"
-                  onPress={() => this._changeTest('ApplePay')}
+
+              <TouchableOpacity
+                style={styles.closeKeyboardView}
+                onPress={() => Keyboard.dismiss()}
+                testID="closeKeyboard"
               />
-          )}
-        </View>
 
-        {restarting ? null : (
-          <View
-            testID={`example-${currentTest.testId}`}
-            key={currentTest.title}
-            style={styles.exampleContainer}>
-            <Text style={styles.exampleTitle}>{currentTest.title}</Text>
-            <Text style={styles.exampleDescription}>
-              {currentTest.description}
-            </Text>
-            <View style={styles.exampleInnerContainer}>
-              {currentTest.render()}
-            </View>
-          </View>
-        )}
+              <TouchableOpacity
+                testID="restart_button"
+                onPress={this._simulateRestart}
+                style={styles.restartButton}
+                activeOpacity={0.6}>
+                <Text>Simulate Restart</Text>
+              </TouchableOpacity>
+
+              <View style={styles.testPickerContainer}>
+                <Button
+                  testID="testType_alerts"
+                  title="Alerts"
+                  onPress={() => this._changeTest('Alerts')}
+                />
+                <Button
+                  testID="testType_scrolling"
+                  title="Scrolling"
+                  onPress={() => this._changeTest('Scrolling')}
+                />
+                <Button
+                  testID="testType_background"
+                  title="Background"
+                  onPress={() => this._changeTest('Background')}
+                />
+                <Button
+                  testID="testType_injection"
+                  title="Injection"
+                  onPress={() => this._changeTest('Injection')}
+                />
+                <Button
+                  testID="testType_pageLoad"
+                  title="LocalPageLoad"
+                  onPress={() => this._changeTest('PageLoad')}
+                />
+                {Platform.OS == 'ios' && (
+                  <Button
+                    testID="testType_downloads"
+                    title="Downloads"
+                    onPress={() => this._changeTest('Downloads')}
+                  />
+                )}
+                {Platform.OS === 'android' && (
+                  <Button
+                    testID="testType_uploads"
+                    title="Uploads"
+                    onPress={() => this._changeTest('Uploads')}
+                  />
+                )}
+                <Button
+                  testID="testType_messaging"
+                  title="Messaging"
+                  onPress={() => this._changeTest('Messaging')}
+                />
+                <Button
+                  testID="testType_nativeWebpage"
+                  title="NativeWebpage"
+                  onPress={() => this._changeTest('NativeWebpage')}
+                />
+                {Platform.OS === 'ios' && (
+                    <Button
+                        testID="testType_applePay"
+                        title="ApplePay"
+                        onPress={() => this._changeTest('ApplePay')}
+                    />
+                )}
+              </View>
+
+              {restarting ? null : (
+                <View
+                  testID={`example-${currentTest.testId}`}
+                  key={currentTest.title}
+                  style={styles.exampleContainer}>
+                  <Text style={styles.exampleTitle}>{currentTest.title}</Text>
+                  <Text style={styles.exampleDescription}>
+                    {currentTest.description}
+                  </Text>
+                  <View style={styles.exampleInnerContainer}>
+                    {currentTest.render()}
+                  </View>
+                </View>
+              )}
+            </>
+          )
+        }
+        
       </SafeAreaView>
     );
   }

@@ -107,11 +107,43 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mUserAgent = null;
   protected @Nullable String mUserAgentWithApplicationName = null;
 
-  public RNCWebViewManager() { }
+  public RNCWebViewManager() {
+    Log.d(TAG, "RNCWebViewManager: ");
+  }
+
+
+  public RNCWebViewManager(ReactContext reactContext) {
+    Log.d(TAG, "RNCWebViewManager: ");
+    eagerlyCreateViewInstance(reactContext);
+  }
 
   @Override
   public String getName() {
     return REACT_CLASS;
+  }
+
+
+  @Override
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  protected WebView createViewInstance(ThemedReactContext reactContext) {
+    Log.d(TAG, "createViewInstance: ");
+    return eagerlyCreateViewInstance(reactContext);
+  }
+
+
+  // Now portable to anywhere with ReactContext
+  public RNCWebView eagerlyCreateViewInstance(ReactContext reactContext) {
+    Log.d(TAG, "eagerlyCreateViewInstance: ");
+    RNCWebView webView = new RNCWebView(reactContext);
+    // They had before webView config - so we leave that order
+    setupWebChromeClient(reactContext, webView);
+    reactContext.addLifecycleEventListener(webView);
+
+    // New to enable having configureRNCWebView
+    RNCWebViewModule module = getModule(reactContext);
+    configureRNCWebView(webView, module);
+
+    return webView;
   }
 
   private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
@@ -180,28 +212,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   }
 
-  // Now portable to anywhere with ReactContext
-  public RNCWebView eagerlyCreateViewInstance(ReactContext reactContext) {
-    Log.d(TAG, "eagerlyCreateViewInstance: ");
-    RNCWebView webView = new RNCWebView(reactContext);
-    // They had before webView config - so we leave that order
-    setupWebChromeClient(reactContext, webView);
-    reactContext.addLifecycleEventListener(webView);
-
-    // New to enable having configureRNCWebView
-    RNCWebViewModule module = getModule(reactContext);
-    configureRNCWebView(webView, module);
-
-    return webView;
-  }
-
-  @Override
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
-    Log.d(TAG, "createViewInstance: ");
-    return eagerlyCreateViewInstance(reactContext);
-  }
-
+  // Prop functions:
+  // -----------------------------------------------------------------------------------------
   @ReactProp(name = "javaScriptEnabled")
   public void setJavaScriptEnabled(WebView view, boolean enabled) {
     view.getSettings().setJavaScriptEnabled(enabled);
@@ -599,6 +611,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       }
     }
   }
+
+  // End of prop functions
+  // -----------------------------------------------------------------------------------------
 
 
   /**
