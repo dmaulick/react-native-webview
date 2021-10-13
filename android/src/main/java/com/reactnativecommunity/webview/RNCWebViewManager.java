@@ -155,7 +155,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected static final int SHOULD_OVERRIDE_URL_LOADING_TIMEOUT = 250;
   protected WebViewConfig mWebViewConfig;
 
-//  protected RNCWebChromeClient mWebChromeClient = null;
+  protected RNCWebChromeClient mWebChromeClient = null;
   protected boolean mAllowsFullscreenVideo = false;
   protected @Nullable String mUserAgent = null;
   protected @Nullable String mUserAgentWithApplicationName = null;
@@ -184,7 +184,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
 
     RNCWebView webView = new RNCWebView(reactContext);
-//    setupWebChromeClient(baseReactContext, webView);
+    setupWebChromeClient(baseReactContext, webView);
     ((ReactContext) baseReactContext).addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
 
@@ -606,7 +606,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     WebView view,
     @Nullable Boolean allowsFullscreenVideo) {
     mAllowsFullscreenVideo = allowsFullscreenVideo != null && allowsFullscreenVideo;
-//    setupWebChromeClient((ReactContext)view.getContext(), view);
+    setupWebChromeClient((ReactContext)view.getContext(), view);
   }
 
   @ReactProp(name = "allowFileAccess")
@@ -754,11 +754,109 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     super.onDropViewInstance(webView);
     ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
-//    mWebChromeClient = null;
+    mWebChromeClient = null;
   }
 
   public static RNCWebViewModule getModule(ReactContext reactContext) {
     return reactContext.getNativeModule(RNCWebViewModule.class);
+  }
+
+  protected void setupWebChromeClient(ReactContext reactContext, WebView webView) {
+    if (mAllowsFullscreenVideo) {
+      int initialRequestedOrientation = reactContext.getCurrentActivity().getRequestedOrientation();
+      mWebChromeClient = new RNCWebChromeClient(reactContext, webView) {
+        @Override
+        public Bitmap getDefaultVideoPoster() {
+          return Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
+        }
+
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+          if (mVideoView != null) {
+            callback.onCustomViewHidden();
+            return;
+          }
+
+          mVideoView = view;
+          mCustomViewCallback = callback;
+
+          mReactContext.getCurrentActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mVideoView.setSystemUiVisibility(FULLSCREEN_SYSTEM_UI_VISIBILITY);
+            mReactContext.getCurrentActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+          }
+
+          mVideoView.setBackgroundColor(Color.BLACK);
+
+          // since RN's Modals interfere with the View hierarchy
+          // we will decide which View to Hide if the hierarchy
+          // does not match (i.e., the webview is within a Modal)
+          // NOTE: We could use mWebView.getRootView() instead of getRootView()
+          // but that breaks the Modal's styles and layout, so we need this to render
+          // in the main View hierarchy regardless.
+          ViewGroup rootView = getRootView();
+          rootView.addView(mVideoView, FULLSCREEN_LAYOUT_PARAMS);
+
+          // Different root views, we are in a Modal
+          if(rootView.getRootView() != mWebView.getRootView()){
+            mWebView.getRootView().setVisibility(View.GONE);
+          }
+
+          // Same view hierarchy (no Modal), just hide the webview then
+          else{
+            mWebView.setVisibility(View.GONE);
+          }
+
+          mReactContext.addLifecycleEventListener(this);
+        }
+
+        @Override
+        public void onHideCustomView() {
+          if (mVideoView == null) {
+            return;
+          }
+
+          // same logic as above
+          ViewGroup rootView = getRootView();
+
+          if(rootView.getRootView() !=  mWebView.getRootView()){
+            mWebView.getRootView().setVisibility(View.VISIBLE);
+          }
+
+          // Same view hierarchy (no Modal)
+          else{
+            mWebView.setVisibility(View.VISIBLE);
+          }
+
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mReactContext.getCurrentActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+          }
+
+          rootView.removeView(mVideoView);
+          mCustomViewCallback.onCustomViewHidden();
+
+          mVideoView = null;
+          mCustomViewCallback = null;
+
+          mReactContext.getCurrentActivity().setRequestedOrientation(initialRequestedOrientation);
+
+          mReactContext.removeLifecycleEventListener(this);
+        }
+      };
+      webView.setWebChromeClient(mWebChromeClient);
+    } else {
+      if (mWebChromeClient != null) {
+        mWebChromeClient.onHideCustomView();
+      }
+      mWebChromeClient = new RNCWebChromeClient(reactContext, webView) {
+        @Override
+        public Bitmap getDefaultVideoPoster() {
+          return Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
+        }
+      };
+      webView.setWebChromeClient(mWebChromeClient);
+    }
   }
 
   protected static class RNCWebViewClient extends WebViewClient {
@@ -1051,6 +1149,305 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
   }
 
+  protected static class RNCWebChromeClient extends WebChromeClient implements LifecycleEventListener {
+    protected static final FrameLayout.LayoutParams FULLSCREEN_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
+      LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER);
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    protected static final int FULLSCREEN_SYSTEM_UI_VISIBILITY = View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+      View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+      View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+      View.SYSTEM_UI_FLAG_FULLSCREEN |
+      View.SYSTEM_UI_FLAG_IMMERSIVE |
+      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+
+    protected static final int COMMON_PERMISSION_REQUEST = 3;
+
+    protected ReactContext mReactContext;
+    protected View mWebView;
+
+    protected View mVideoView;
+    protected WebChromeClient.CustomViewCallback mCustomViewCallback;
+
+    /*
+     * - Permissions -
+     * As native permissions are asynchronously handled by the PermissionListener, many fields have
+     * to be stored to send permissions results to the webview
+     */
+
+    // Webview camera & audio permission callback
+    protected PermissionRequest permissionRequest;
+    // Webview camera & audio permission already granted
+    protected List<String> grantedPermissions;
+
+    // Webview geolocation permission callback
+    protected GeolocationPermissions.Callback geolocationPermissionCallback;
+    // Webview geolocation permission origin callback
+    protected String geolocationPermissionOrigin;
+
+    // true if native permissions dialog is shown, false otherwise
+    protected boolean permissionsRequestShown = false;
+    // Pending Android permissions for the next request
+    protected List<String> pendingPermissions = new ArrayList<>();
+
+    protected RNCWebView.ProgressChangedFilter progressChangedFilter = null;
+
+    public RNCWebChromeClient(ReactContext reactContext, WebView webView) {
+      this.mReactContext = reactContext;
+      this.mWebView = webView;
+    }
+
+    @Override
+    public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+
+      final WebView newWebView = new WebView(view.getContext());
+      final WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+      transport.setWebView(newWebView);
+      resultMsg.sendToTarget();
+
+      return true;
+    }
+
+    @Override
+    public boolean onConsoleMessage(ConsoleMessage message) {
+      if (ReactBuildConfig.DEBUG) {
+        return super.onConsoleMessage(message);
+      }
+      // Ignore console logs in non debug builds.
+      return true;
+    }
+
+    @Override
+    public void onProgressChanged(WebView webView, int newProgress) {
+      super.onProgressChanged(webView, newProgress);
+      final String url = webView.getUrl();
+      if (progressChangedFilter.isWaitingForCommandLoadUrl()) {
+        return;
+      }
+      WritableMap event = Arguments.createMap();
+      event.putDouble("target", webView.getId());
+      event.putString("title", webView.getTitle());
+      event.putString("url", url);
+      event.putBoolean("canGoBack", webView.canGoBack());
+      event.putBoolean("canGoForward", webView.canGoForward());
+      event.putDouble("progress", (float) newProgress / 100);
+      ((RNCWebView) webView).dispatchEvent(
+        webView,
+        new TopLoadingProgressEvent(
+          webView.getId(),
+          event));
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void onPermissionRequest(final PermissionRequest request) {
+
+      grantedPermissions = new ArrayList<>();
+
+      ArrayList<String> requestedAndroidPermissions = new ArrayList<>();
+      for (String requestedResource : request.getResources()) {
+        String androidPermission = null;
+
+        if (requestedResource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+          androidPermission = Manifest.permission.RECORD_AUDIO;
+        } else if (requestedResource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+          androidPermission = Manifest.permission.CAMERA;
+        } else if(requestedResource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
+          androidPermission = PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID;
+        }
+        // TODO: RESOURCE_MIDI_SYSEX, RESOURCE_PROTECTED_MEDIA_ID.
+
+        if (androidPermission != null) {
+          if (ContextCompat.checkSelfPermission(mReactContext, androidPermission) == PackageManager.PERMISSION_GRANTED) {
+            grantedPermissions.add(requestedResource);
+          } else {
+            requestedAndroidPermissions.add(androidPermission);
+          }
+        }
+      }
+
+      // If all the permissions are already granted, send the response to the WebView synchronously
+      if (requestedAndroidPermissions.isEmpty()) {
+        request.grant(grantedPermissions.toArray(new String[0]));
+        grantedPermissions = null;
+        return;
+      }
+
+      // Otherwise, ask to Android System for native permissions asynchronously
+
+      this.permissionRequest = request;
+
+      requestPermissions(requestedAndroidPermissions);
+    }
+
+
+    @Override
+    public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+
+      if (ContextCompat.checkSelfPermission(mReactContext, Manifest.permission.ACCESS_FINE_LOCATION)
+        != PackageManager.PERMISSION_GRANTED) {
+
+        /*
+         * Keep the trace of callback and origin for the async permission request
+         */
+        geolocationPermissionCallback = callback;
+        geolocationPermissionOrigin = origin;
+
+        requestPermissions(Collections.singletonList(Manifest.permission.ACCESS_FINE_LOCATION));
+
+      } else {
+        callback.invoke(origin, true, false);
+      }
+    }
+
+    private PermissionAwareActivity getPermissionAwareActivity() {
+      Activity activity = mReactContext.getCurrentActivity();
+      if (activity == null) {
+        throw new IllegalStateException("Tried to use permissions API while not attached to an Activity.");
+      } else if (!(activity instanceof PermissionAwareActivity)) {
+        throw new IllegalStateException("Tried to use permissions API but the host Activity doesn't implement PermissionAwareActivity.");
+      }
+      return (PermissionAwareActivity) activity;
+    }
+
+    private synchronized void requestPermissions(List<String> permissions) {
+
+      /*
+       * If permissions request dialog is displayed on the screen and another request is sent to the
+       * activity, the last permission asked is skipped. As a work-around, we use pendingPermissions
+       * to store next required permissions.
+       */
+
+      if (permissionsRequestShown) {
+        pendingPermissions.addAll(permissions);
+        return;
+      }
+
+      PermissionAwareActivity activity = getPermissionAwareActivity();
+      permissionsRequestShown = true;
+
+      activity.requestPermissions(
+        permissions.toArray(new String[0]),
+        COMMON_PERMISSION_REQUEST,
+        webviewPermissionsListener
+      );
+
+      // Pending permissions have been sent, the list can be cleared
+      pendingPermissions.clear();
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private PermissionListener webviewPermissionsListener = (requestCode, permissions, grantResults) -> {
+
+      permissionsRequestShown = false;
+
+      /*
+       * As a "pending requests" approach is used, requestCode cannot help to define if the request
+       * came from geolocation or camera/audio. This is why shouldAnswerToPermissionRequest is used
+       */
+      boolean shouldAnswerToPermissionRequest = false;
+
+      for (int i = 0; i < permissions.length; i++) {
+
+        String permission = permissions[i];
+        boolean granted = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+
+        if (permission.equals(Manifest.permission.ACCESS_FINE_LOCATION)
+          && geolocationPermissionCallback != null
+          && geolocationPermissionOrigin != null) {
+
+          if (granted) {
+            geolocationPermissionCallback.invoke(geolocationPermissionOrigin, true, false);
+          } else {
+            geolocationPermissionCallback.invoke(geolocationPermissionOrigin, false, false);
+          }
+
+          geolocationPermissionCallback = null;
+          geolocationPermissionOrigin = null;
+        }
+
+        if (permission.equals(Manifest.permission.RECORD_AUDIO)) {
+          if (granted && grantedPermissions != null) {
+            grantedPermissions.add(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
+          }
+          shouldAnswerToPermissionRequest = true;
+        }
+
+        if (permission.equals(Manifest.permission.CAMERA)) {
+          if (granted && grantedPermissions != null) {
+            grantedPermissions.add(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+          }
+          shouldAnswerToPermissionRequest = true;
+        }
+
+        if (permission.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
+          if (granted && grantedPermissions != null) {
+            grantedPermissions.add(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID);
+          }
+          shouldAnswerToPermissionRequest = true;
+        }
+      }
+
+      if (shouldAnswerToPermissionRequest
+        && permissionRequest != null
+        && grantedPermissions != null) {
+        permissionRequest.grant(grantedPermissions.toArray(new String[0]));
+        permissionRequest = null;
+        grantedPermissions = null;
+      }
+
+      if (!pendingPermissions.isEmpty()) {
+        requestPermissions(pendingPermissions);
+        return false;
+      }
+
+      return true;
+    };
+
+    protected void openFileChooser(ValueCallback<Uri> filePathCallback, String acceptType) {
+      getModule(mReactContext).startPhotoPickerIntent(filePathCallback, acceptType);
+    }
+
+    protected void openFileChooser(ValueCallback<Uri> filePathCallback) {
+      getModule(mReactContext).startPhotoPickerIntent(filePathCallback, "");
+    }
+
+    protected void openFileChooser(ValueCallback<Uri> filePathCallback, String acceptType, String capture) {
+      getModule(mReactContext).startPhotoPickerIntent(filePathCallback, acceptType);
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+      String[] acceptTypes = fileChooserParams.getAcceptTypes();
+      boolean allowMultiple = fileChooserParams.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE;
+      return getModule(mReactContext).startPhotoPickerIntent(filePathCallback, acceptTypes, allowMultiple);
+    }
+
+    @Override
+    public void onHostResume() {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mVideoView != null && mVideoView.getSystemUiVisibility() != FULLSCREEN_SYSTEM_UI_VISIBILITY) {
+        mVideoView.setSystemUiVisibility(FULLSCREEN_SYSTEM_UI_VISIBILITY);
+      }
+    }
+
+    @Override
+    public void onHostPause() { }
+
+    @Override
+    public void onHostDestroy() { }
+
+    protected ViewGroup getRootView() {
+      return (ViewGroup) mReactContext.getCurrentActivity().findViewById(android.R.id.content);
+    }
+
+    public void setProgressChangedFilter(RNCWebView.ProgressChangedFilter filter) {
+      progressChangedFilter = filter;
+    }
+  }
+
   /**
    * Subclass of {@link WebView} that implements {@link LifecycleEventListener} interface in order
    * to call {@link WebView#destroy} on activity destroy event and also to clear the client
@@ -1166,9 +1563,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     public void setWebChromeClient(WebChromeClient client) {
       this.mWebChromeClient = client;
       super.setWebChromeClient(client);
-//      if (client instanceof RNCWebChromeClient) {
-//        ((RNCWebChromeClient) client).setProgressChangedFilter(progressChangedFilter);
-//      }
+      if (client instanceof RNCWebChromeClient) {
+        ((RNCWebChromeClient) client).setProgressChangedFilter(progressChangedFilter);
+      }
     }
 
     public @Nullable
