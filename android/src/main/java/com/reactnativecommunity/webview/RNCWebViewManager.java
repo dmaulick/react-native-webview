@@ -105,16 +105,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mUserAgent = null;
   protected @Nullable String mUserAgentWithApplicationName = null;
 
-  public RNCWebViewManager() {
-    mWebViewConfig = new WebViewConfig() {
-      public void configWebView(WebView webView) {
-      }
-    };
-  }
-
-  public RNCWebViewManager(WebViewConfig webViewConfig) {
-    mWebViewConfig = webViewConfig;
-  }
+  public RNCWebViewManager() { }
 
   @Override
   public String getName() {
@@ -122,8 +113,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   }
 
   private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
-
-    mWebViewConfig.configWebView(webView);
 
 //    WebSetting default settings
     WebSettings settings = webView.getSettings();
