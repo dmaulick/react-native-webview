@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import {
   Image,
@@ -31,7 +31,6 @@ import {
   NativeWebViewAndroid,
   State,
   RNCWebViewUIManagerAndroid,
-  AndroidNativeWebViewProps,
 } from './WebViewTypes';
 
 import styles from './WebView.styles';

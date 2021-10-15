@@ -15,6 +15,7 @@ import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.ReactStylesDiffMap;
 import com.facebook.react.uimanager.StateWrapper;
 import com.facebook.react.uimanager.ThemedReactContext;
+import com.facebook.react.uimanager.annotations.ReactProp;
 
 
 @ReactModule(name = TVWebViewManager.REACT_CLASS)
@@ -28,6 +29,28 @@ public class TVWebViewManager extends RNCWebViewManager {
   }
 
   private WebView mCachedWebView;
+
+  protected @NonNull WebView codePulledFromBaseViewManager(
+    WebView view,
+    int reactTag,
+    @NonNull ThemedReactContext reactContext,
+    @Nullable ReactStylesDiffMap initialProps,
+    @Nullable StateWrapper stateWrapper) {
+    // T view = createViewInstance(reactContext); - This is the only piece that needs to be pulled...
+    view.setId(reactTag);
+    addEventEmitters(reactContext, view);
+    if (initialProps != null) {
+      updateProperties(view, initialProps);
+    }
+    // Only present in Fabric; but always present in Fabric.
+    if (stateWrapper != null) {
+      Object extraData = updateState(view, initialProps, stateWrapper);
+      if (extraData != null) {
+        updateExtraData(view, extraData);
+      }
+    }
+    return view;
+  }
 
   // Learn more here: https://github.com/facebook/react-native/blob/678f2cb936ae4cf10e1fa4b032b91bfe9b77efaf/ReactAndroid/src/main/java/com/facebook/react/uimanager/ViewManager.java#L134
   // Chiefly that this is upstream of the other overload which is originally used by the lib
@@ -47,18 +70,21 @@ public class TVWebViewManager extends RNCWebViewManager {
         if (mCachedWebView == null) {
           throw new Exception("Cached TVWebView is null.");
         }
-        return mCachedWebView;
+        return codePulledFromBaseViewManager(mCachedWebView, reactTag, reactContext, initialProps, stateWrapper);
       }
     } catch (Exception e) {
+      // TODO: ideally we let exception bubble up
       Log.d(TAG, "Exception thrown attempting to access cached WebView. Exception: " + e.toString());
     }
-    return super.createViewInstance(reactTag, reactContext, initialProps, stateWrapper);
+    WebView view = createViewInstance(reactContext); // Single line pulled from ViewManager.createViewInstance()
+    return codePulledFromBaseViewManager(view, reactTag, reactContext, initialProps, stateWrapper);
   }
 
   @NonNull
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
+    Log.d(TAG, "createViewInstance:  should not be called if eager init");
     return helpCreateViewInstance(reactContext);
   }
 
@@ -66,6 +92,14 @@ public class TVWebViewManager extends RNCWebViewManager {
     mCachedWebView = helpCreateViewInstance(reactContext);
     return mCachedWebView;
   }
+
+  @ReactProp(name = "isCached")
+  public void setIsCached(
+    WebView view,
+    @Nullable Boolean isCached) {
+    // Should not do anything. Just here for createView overload
+  }
+
 
   protected static class TVWebView extends RNCWebView {
     public TVWebView(ThemedReactContext reactContext) {
