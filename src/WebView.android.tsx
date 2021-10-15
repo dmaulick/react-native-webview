@@ -50,7 +50,7 @@ let uniqueRef = 0;
 /**
  * Renders a native WebView.
  */
-class WebView extends React.Component<AndroidWebViewProps, State> {
+class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
   static defaultProps = {
     overScrollMode: 'always',
     javaScriptEnabled: true,
@@ -385,6 +385,11 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
       </View>
     );
   }
+}
+
+const WebView = (props: AndroidWebViewProps) => {
+  
+  return <WebViewInternal {...props}/>
 }
 
 export default WebView;

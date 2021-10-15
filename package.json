@@ -20,7 +20,7 @@
     "ci": "CI=true && yarn lint",
     "ci:publish": "yarn semantic-release",
     "lint": "yarn tsc --noEmit && yarn eslint ./src --ext .ts,.tsx",
-    "build": "yarn tsc",
+    "build": "yarn tsc -w",
     "prepare": "yarn build",
     "appium": "appium",
     "test:windows": "yarn jest --setupFiles=./jest-setups/jest.setup.js"
