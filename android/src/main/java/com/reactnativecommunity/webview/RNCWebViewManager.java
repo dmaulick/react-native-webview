@@ -175,24 +175,28 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     return REACT_CLASS;
   }
 
-  // This is here soley so that consumers can override it
-  // HOWEVER, we are not going to override this.
-  // We are overriding the __________fill in once confirmed__________
-  protected RNCWebView createRNCWebViewInstance(ThemedReactContext reactContext) {
-    return new RNCWebView(reactContext);
-  }
 
+  // Need this for class to be valid but we override it in subclass
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
-    return imperativeCreateViewInstance(reactContext);
+    return helpCreateViewInstance(reactContext);
   }
 
-  // Init logic now available to anywhere with ReactContext
-  public WebView imperativeCreateViewInstance(ThemedReactContext reactContext /* Needs to be ReactContext so that is accessible from Native Modules */) {
-    RNCWebView webView = createRNCWebViewInstance(reactContext);
+  // portable create logic that can be called for cached creation or normal creation
+  protected WebView helpCreateViewInstance(ReactContext reactContext) {
+    RNCWebView webView = new RNCWebView(reactContext);
+
+    // This code block was inline before, added configureRNCWebView to make easier on the eyess
     setupWebChromeClient(reactContext, webView);
     reactContext.addLifecycleEventListener(webView);
+    RNCWebViewModule module = getModule(reactContext);
+    configureRNCWebView(webView, module);
+
+    return webView;
+  }
+
+  private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
     mWebViewConfig.configWebView(webView);
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
@@ -220,8 +224,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     webView.setDownloadListener(new DownloadListener() {
       public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
         webView.setIgnoreErrFailedForThisURL(url);
-
-        RNCWebViewModule module = getModule(reactContext);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
@@ -255,8 +257,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       }
     });
-
-    return webView;
   }
 
   @ReactProp(name = "javaScriptEnabled")
@@ -757,6 +757,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   public void onDropViewInstance(WebView webView) {
     super.onDropViewInstance(webView);
+    imperativeDropViewInstance(webView);
+  }
+
+  // TODO: tear down will depend on it it is the cached version
+  public void imperativeDropViewInstance(WebView webView) {
     ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
     mWebChromeClient = null;
@@ -1489,7 +1494,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
      * Activity Context is required for creation of dialogs internally by WebView
      * Reactive Native needed for access to ReactNative internal system functionality
      */
-    public RNCWebView(ThemedReactContext reactContext) {
+    // No reason to be themedContext:
+    public RNCWebView(ReactContext reactContext) {
       super(reactContext);
       this.createCatalystInstance();
       progressChangedFilter = new ProgressChangedFilter();

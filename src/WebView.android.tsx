@@ -396,6 +396,7 @@ const TVWebView = requireNativeComponent('TVWebView');
 
 const WebView = React.forwardRef((props: AndroidWebViewProps, ref) => {
   
+  // TODO: resolve this. could not get the component types to work correctly
   // @ts-ignore
   return <WebViewInternal ref={ref} {...props} nativeConfig={{ component: TVWebView }} />
 })
