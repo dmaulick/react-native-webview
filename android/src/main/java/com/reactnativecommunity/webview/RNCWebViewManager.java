@@ -127,7 +127,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @ReactModule(name = RNCWebViewManager.REACT_CLASS)
 public class RNCWebViewManager extends SimpleViewManager<WebView> {
-  private static final String TAG = "RNCWebViewManager";
+  public static final String TAG = "RNCWebViewLogTag";
 
   public static final int COMMAND_GO_BACK = 1;
   public static final int COMMAND_GO_FORWARD = 2;
@@ -175,6 +175,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     return REACT_CLASS;
   }
 
+  // This is here soley so that consumers can override it
+  // HOWEVER, we are not going to override this.
+  // We are overriding the __________fill in once confirmed__________
   protected RNCWebView createRNCWebViewInstance(ThemedReactContext reactContext) {
     return new RNCWebView(reactContext);
   }
@@ -182,6 +185,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
+    return imperativeCreateViewInstance(reactContext);
+  }
+
+  // Init logic now available to anywhere with ReactContext
+  public WebView imperativeCreateViewInstance(ThemedReactContext reactContext /* Needs to be ReactContext so that is accessible from Native Modules */) {
     RNCWebView webView = createRNCWebViewInstance(reactContext);
     setupWebChromeClient(reactContext, webView);
     reactContext.addLifecycleEventListener(webView);

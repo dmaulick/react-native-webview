@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 import {
   Image,
@@ -31,15 +31,17 @@ import {
   NativeWebViewAndroid,
   State,
   RNCWebViewUIManagerAndroid,
+  AndroidNativeWebViewProps,
 } from './WebViewTypes';
 
 import styles from './WebView.styles';
 
 const UIManager = NotTypedUIManager as RNCWebViewUIManagerAndroid;
 
-const RNCWebView = requireNativeComponent(
-  'RNCWebView',
-) as typeof NativeWebViewAndroid;
+// Just to show we are not using this at all:
+// const RNCWebView = requireNativeComponent(
+//   'RNCWebView',
+// ) as typeof NativeWebViewAndroid;
 const { resolveAssetSource } = Image;
 
 /**
@@ -91,7 +93,9 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
     BatchedBridge.registerCallableModule(this.messagingModuleName, this);
   };
 
-  getCommands = () => UIManager.getViewManagerConfig('RNCWebView').Commands;
+  // TODO: This change RNCWebView -> TVWebView resolved an error on messages version of webview.
+  // Eventually should look into it
+  getCommands = () => UIManager.getViewManagerConfig('TVWebView').Commands;
 
   goForward = () => {
     UIManager.dispatchViewManagerCommand(
@@ -346,8 +350,9 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
       }
     }
 
-    const NativeWebView
-      = (nativeConfig.component as typeof NativeWebViewAndroid) || RNCWebView;
+    const NativeWebView = (nativeConfig.component as typeof NativeWebViewAndroid);
+    // Againn just to show we are not using RNCWebView directly at all:
+      // = (nativeConfig.component as typeof NativeWebViewAndroid) || RNCWebView;
 
     this.onShouldStartLoadWithRequest = createOnShouldStartLoadWithRequest(
       this.onShouldStartLoadWithRequestCallback,
@@ -387,9 +392,12 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
   }
 }
 
-const WebView = (props: AndroidWebViewProps) => {
+const TVWebView = requireNativeComponent('TVWebView');
+
+const WebView = React.forwardRef((props: AndroidWebViewProps, ref) => {
   
-  return <WebViewInternal {...props}/>
-}
+  // @ts-ignore
+  return <WebViewInternal ref={ref} {...props} nativeConfig={{ component: TVWebView }} />
+})
 
 export default WebView;
