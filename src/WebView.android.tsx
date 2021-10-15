@@ -50,6 +50,10 @@ import {
 
 import styles from './WebView.styles';
 
+
+const stableValue = 99555888;
+
+
 const UIManager = NotTypedUIManager as RNCWebViewUIManagerAndroid;
 
 const RNCWebView = requireNativeComponent(
@@ -396,6 +400,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
       <NativeWebView
         key="webViewKey"
         {...otherProps}
+        handleId={stableValue}
         messagingEnabled={typeof onMessage === 'function'}
         messagingModuleName={this.messagingModuleName}
         onLoadingError={this.onLoadingError}

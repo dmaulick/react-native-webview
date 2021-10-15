@@ -20,6 +20,7 @@ import android.webkit.URLUtil;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
@@ -31,7 +32,9 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.common.MapBuilder;
 import com.facebook.react.common.build.ReactBuildConfig;
 import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.uimanager.ReactStylesDiffMap;
 import com.facebook.react.uimanager.SimpleViewManager;
+import com.facebook.react.uimanager.StateWrapper;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.views.scroll.ScrollEventType;
@@ -107,6 +110,10 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   protected @Nullable String mUserAgent = null;
   protected @Nullable String mUserAgentWithApplicationName = null;
 
+
+//  Map <Integer, Point2D.Double> hm = new HashMap<Integer, Point2D>();
+//  hm.put(1, new Point2D.Double(50, 50));
+//  private Map<Integer, RNCWebView> mCachedWebViewMap = new HashMap<Integer, RNCWebView>();;
   private RNCWebView mRNCWebView;
 
   public RNCWebViewManager() {
@@ -127,20 +134,59 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
-    Log.d(TAG, "\ncreateViewInstance: ");
+  protected WebView createViewInstance(
+    int reactTag,
+    @NonNull ThemedReactContext reactContext,
+    @Nullable ReactStylesDiffMap initialProps,
+    @Nullable StateWrapper stateWrapper) {
+
+    // Moved from our old version:
+    Log.d(TAG, "\ncreateViewInstance(4): " + initialProps.toString());
+
     if (mRNCWebView == null) {
       Log.d(TAG, "createViewInstance: mRNCWebView == NULL");
-      eagerlyCreateViewInstance(reactContext);
+      eagerlyCreateViewInstance(reactContext, null);
     } else {
       Log.d(TAG, "createViewInstance: mRNCWebView != NULL");
     }
-    return mRNCWebView;
+
+    // Temp: this is code pulled directly from ViewManager
+    mRNCWebView.setId(reactTag); // view.setId(reactTag);
+    addEventEmitters(reactContext, mRNCWebView); // view);
+    if (initialProps != null) {
+      updateProperties(mRNCWebView /*view*/, initialProps);
+    }
+    // Only present in Fabric; but always present in Fabric.
+    if (stateWrapper != null) {
+      Object extraData = updateState(mRNCWebView /*view*/, initialProps, stateWrapper);
+      if (extraData != null) {
+        updateExtraData(mRNCWebView /*view*/, extraData);
+      }
+    }
+    return mRNCWebView /*view*/;
   }
+
+  // Override abstract function to satisfy class reqs
+  @Override
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  protected WebView createViewInstance(ThemedReactContext reactContext) {
+    Log.d(TAG, "createViewInstance: This should not run at all!");
+    return null; 
+  }
+//    Log.d(TAG, "\ncreateViewInstance(1): ");
+//    return null;
+//    if (mRNCWebView == null) {
+//      Log.d(TAG, "createViewInstance: mRNCWebView == NULL");
+//      eagerlyCreateViewInstance(reactContext, null);
+//    } else {
+//      Log.d(TAG, "createViewInstance: mRNCWebView != NULL");
+//    }
+//    return mRNCWebView;
+
 
 
   // Now portable to anywhere with ReactContext
-  public void eagerlyCreateViewInstance(ReactContext reactContext) {
+  public void eagerlyCreateViewInstance(ReactContext reactContext, @Nullable ReadableMap source) {
     RNCWebView webView = new RNCWebView(reactContext);
     Log.d(TAG, "\neagerlyCreateViewInstance: ");
     // They had before webView config - so we leave that order
@@ -150,6 +196,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     // New to enable having configureRNCWebView
     RNCWebViewModule module = getModule(reactContext);
     configureRNCWebView(webView, module);
+
+    // possibly temp to test source eager init
+    setSource(webView, source);
 
     // doing this is prob temp because we need to keep track of multiple webViews - easily breaks with example
     // Worth doing right now to test eager load
@@ -476,6 +525,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     view.getSettings().setSaveFormData(false);
   }
 
+  // Ideal: figure out how to link view by id
+  @ReactProp(name = "handleId")
+  public void setHandleId(WebView view, @Nullable int handleId) throws Exception {
+    throw new Exception("You can not set handleId after initial render.");
+  }
+
   @ReactProp(name = "source")
   public void setSource(WebView view, @Nullable ReadableMap source) {
     Log.d(TAG, "setSource: ");
@@ -530,7 +585,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         return;
       }
     }
-    view.loadUrl(BLANK_URL);
+    Log.d(TAG, "setSource: setSource passed null - ** we removed original behavior here");
+//    view.loadUrl(BLANK_URL);
   }
 
   @ReactProp(name = "basicAuthCredential")

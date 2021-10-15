@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   NativeModules,
+  Image,
 } from 'react-native';
 
 import Alerts from './examples/Alerts';
@@ -22,6 +23,9 @@ import LocalPageLoad from './examples/LocalPageLoad';
 import Messaging from './examples/Messaging';
 import NativeWebpage from './examples/NativeWebpage';
 import ApplePay from './examples/ApplePay';
+
+
+const { resolveAssetSource } = Image;
 
 const TESTS = {
   Messaging: {
@@ -132,7 +136,7 @@ export default class App extends Component<Props, State> {
 
 
   _eagerLoadWebView = () => {
-    NativeModules.RNCWebView.eagerInitRNCWebViewManager()
+    NativeModules.RNCWebView.eagerInitRNCWebViewManager(resolveAssetSource({uri: 'https://infinite.red'} as ImageSourcePropType))
   };
 
 

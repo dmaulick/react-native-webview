@@ -32,6 +32,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
@@ -132,10 +133,8 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
     return MODULE_NAME;
   }
 
-
-
   @ReactMethod
-  public void eagerInitRNCWebViewManager() {
+  public void eagerInitRNCWebViewManager(@Nullable ReadableMap source) {
     Log.d(RNCWebViewManager.TAG, "eagerInitRNCWebViewManager: ");
 
     // One option that may be more flexible:
@@ -143,7 +142,7 @@ public class RNCWebViewModule extends ReactContextBaseJavaModule implements Acti
       @Override
       public void run() {
         Log.d(RNCWebViewManager.TAG, "Handler(Looper.getMainLooper() in eagerInitRNCWebViewManager");
-        mRNCWebViewManager.eagerlyCreateViewInstance(mReactContext);
+        mRNCWebViewManager.eagerlyCreateViewInstance(mReactContext, source);
       }
     });
 

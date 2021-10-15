@@ -87,7 +87,7 @@ export const NativeWebpage = () => {
 
         ref={webViewRef}
 
-        source={{uri: 'https://infinite.red'}}
+        // source={{uri: 'https://infinite.red'}}
 
         
         // postMessage={} - imperative
