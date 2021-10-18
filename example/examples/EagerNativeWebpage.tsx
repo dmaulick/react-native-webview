@@ -3,17 +3,18 @@ import {View} from 'react-native';
 
 import WebView from 'react-native-webview';
 
-type Props = {};
-type State = {};
+interface Props {}
+interface State {}
 
-export default class NativeWebpage extends Component<Props, State> {
+export default class EagerNativeWebpage extends Component<Props, State> {
   state = {};
 
   render() {
     return (
       <View style={{height: 400}}>
         <WebView
-          source={{uri: 'https://infinite.red'}}
+          isCached
+          // source={{uri: 'https://infinite.red'}}
           style={{width: '100%', height: '100%'}}
           // setSupportMultipleWindows={false}
         />

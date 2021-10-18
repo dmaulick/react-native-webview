@@ -10,6 +10,7 @@ import {
   Platform,
   NativeModules,
   Image,
+  ImageSourcePropType,
 } from 'react-native';
 
 import Alerts from './examples/Alerts';
@@ -98,6 +99,14 @@ const TESTS = {
       return <NativeWebpage />;
     },
   },
+  EagerNativeWebpage: {
+    title: 'EagerNativeWebpage',
+    testId: 'EagerNativeWebpage',
+    description: 'Eager - Test to open a new webview with a link',
+    render() {
+      return <NativeWebpage />;
+    },
+  },
   ApplePay: {
     title: 'Apple Pay ',
     testId: 'ApplePay',
@@ -132,7 +141,7 @@ export default class App extends Component<Props, State> {
   }
 
   _eagerLoadWebView = () => {
-    NativeModules.TVWebView.createCachedTVWebView(); // resolveAssetSource({uri: 'https://infinite.red'} as ImageSourcePropType))
+    NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({uri: 'https://infinite.red'} as ImageSourcePropType)); 
   };
 
 
@@ -220,6 +229,11 @@ export default class App extends Component<Props, State> {
                 testID="testType_nativeWebpage"
                 title="NativeWebpage"
                 onPress={() => this._changeTest('NativeWebpage')}
+              />
+              <Button
+                testID="testType_eagerNativeWebpage"
+                title="EagerNativeWebpage"
+                onPress={() => this._changeTest('EagerNativeWebpage')}
               />
               {Platform.OS === 'ios' && (
                   <Button

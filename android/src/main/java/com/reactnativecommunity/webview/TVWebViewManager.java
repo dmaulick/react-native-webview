@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.ReactStylesDiffMap;
 import com.facebook.react.uimanager.StateWrapper;
@@ -63,7 +64,7 @@ public class TVWebViewManager extends RNCWebViewManager {
     @Nullable ReactStylesDiffMap initialProps,
     @Nullable StateWrapper stateWrapper) {
 
-    printInitialProps(initialProps);
+    printInitialProps("createViewInstance", initialProps);
 
     try {
       if (initialProps != null && initialProps.getBoolean("isCached", false)) {
@@ -100,6 +101,18 @@ public class TVWebViewManager extends RNCWebViewManager {
     // Should not do anything. Just here for createView overload
   }
 
+
+  // TODO: reolve this
+  // FOR NOW - we are going to aggressively override props so we can just not pass anything
+  // However I think we will want to make this a bit more intelligent
+  @Override
+  @ReactProp(name = "source")
+  public void setSource(WebView view, @Nullable ReadableMap source) {
+    Utils.printReadableMap("TVWebViewManager#setSource", source);
+    if (source != null) {
+      super.setSource(view, source);
+    }
+  }
 
   protected static class TVWebView extends RNCWebView {
     public TVWebView(ThemedReactContext reactContext) {
