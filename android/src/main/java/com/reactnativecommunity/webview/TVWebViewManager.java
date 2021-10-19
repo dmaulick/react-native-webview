@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.ReactStylesDiffMap;
@@ -29,7 +30,7 @@ public class TVWebViewManager extends RNCWebViewManager {
     return REACT_CLASS;
   }
 
-  private WebView mCachedWebView;
+  private TVWebView mCachedWebView;
 
   protected @NonNull WebView codePulledFromBaseViewManager(
     WebView view,
@@ -86,11 +87,13 @@ public class TVWebViewManager extends RNCWebViewManager {
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
     Log.d(TAG, "createViewInstance:  should not be called if eager init");
-    return helpCreateViewInstance(reactContext);
+    TVWebView webView = new TVWebView(reactContext);
+    return helpCreateViewInstance(reactContext, webView);
   }
 
   protected WebView createCachedTVWebView(ReactContext reactContext) {
-    mCachedWebView = helpCreateViewInstance(reactContext);
+    TVWebView webView = new TVWebView(reactContext);
+    mCachedWebView = (TVWebView) helpCreateViewInstance(reactContext, webView);
     return mCachedWebView;
   }
 
@@ -102,7 +105,7 @@ public class TVWebViewManager extends RNCWebViewManager {
   }
 
 
-  // TODO: reolve this
+  // TODO: resolve this
   // FOR NOW - we are going to aggressively override props so we can just not pass anything
   // However I think we will want to make this a bit more intelligent
   @Override
@@ -114,10 +117,19 @@ public class TVWebViewManager extends RNCWebViewManager {
     }
   }
 
+  public void imperativePostMessage(@Nullable ReadableArray args) {
+    super.imperativePostMessage(mCachedWebView, args);
+  };
+
+
+  public void imperativeInjectJavascript(@Nullable ReadableArray args) {
+    mCachedWebView.evaluateJavascriptWithFallback(args.getString(0));
+  };
+
+
   protected static class TVWebView extends RNCWebView {
-    public TVWebView(ThemedReactContext reactContext) {
+    public TVWebView(ReactContext reactContext) {
       super(reactContext);
     }
   }
-
 }

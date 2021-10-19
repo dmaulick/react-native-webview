@@ -13,6 +13,7 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 
+import EagerNativeWebpage from './examples/EagerNativeWebpage';
 import Alerts from './examples/Alerts';
 import Scrolling from './examples/Scrolling';
 import Background from './examples/Background';
@@ -104,7 +105,7 @@ const TESTS = {
     testId: 'EagerNativeWebpage',
     description: 'Eager - Test to open a new webview with a link',
     render() {
-      return <NativeWebpage />;
+      return <EagerNativeWebpage />;
     },
   },
   ApplePay: {
@@ -141,7 +142,20 @@ export default class App extends Component<Props, State> {
   }
 
   _eagerLoadWebView = () => {
-    NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({uri: 'https://infinite.red'} as ImageSourcePropType)); 
+    NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({
+      uri: 'https://github.com/react-native-webview/react-native-webview',
+    } as ImageSourcePropType)); 
+  
+    // NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({uri: 'https://infinite.red'} as ImageSourcePropType)); 
+  
+  };
+
+  _runJSInWebView = () => {
+    const run = `
+      document.body.style.backgroundColor = 'blue';
+      true;
+    `;
+    NativeModules.TVWebView.injectJavascript([run]);
   };
 
 
@@ -167,6 +181,14 @@ export default class App extends Component<Props, State> {
             style={styles.restartButton}
             activeOpacity={0.6}>
             <Text>Trigger Eager Render</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            testID="imperativeRunJsCode"
+            onPress={this._runJSInWebView}
+            style={styles.restartButton}
+            activeOpacity={0.6}>
+            <Text>Imperative Run JS</Text>
           </TouchableOpacity>
 
         <TouchableOpacity

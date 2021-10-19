@@ -32,6 +32,35 @@ public class TVWebViewModule extends RNCWebViewModule {
     mTvWebViewManager = tvWebViewManager;
   }
 
+
+  /**
+   * Default props on initial render that are not set prior to render:
+   * (Make sure to compare with jsx before believing this for gospel)
+   * {
+   *   "width": "100%",
+   *   "javaScriptEnabled": true,
+   *   "saveFormDataDisabled": false,
+   *   "messagingEnabled": false,
+   *   "backgroundColor": -1,
+   *   "height": "100%",
+   *   "thirdPartyCookiesEnabled": true,
+   *   "allowsFullscreenVideo": false,
+   *   "setDisplayZoomControls": false,
+   *   "nestedScrollEnabled": false,
+   *   "overScrollMode": "always",
+   *   "cacheEnabled": true,
+   *   "setBuiltInZoomControls": true,
+   *   "allowFileAccess": false,
+   *   "androidHardwareAccelerationDisabled": false,
+   *   "scalesPageToFit": true,
+   *   "androidLayerType": "none",
+   *   "setSupportMultipleWindows": true,
+   *   "messagingModuleName": "WebViewMessageHandler2",
+   *   "overflow": "hidden",
+   *   "source": null,
+   *   "flex": 1
+   * }
+   */
   //@Nullable ReadableMap source
   @ReactMethod
   public void createCachedTVWebView(@Nullable ReadableMap source) {
@@ -47,7 +76,31 @@ public class TVWebViewModule extends RNCWebViewModule {
 
         // initialize:
         mTvWebViewManager.setSource(webView, source);
+        mTvWebViewManager.setJavaScriptEnabled(webView, true);
+      }
+    });
+  }
 
+
+  // TODO: this is still not hooked up to the RN side
+  @ReactMethod
+  public void postMessage(String message) {
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
+      @Override
+      public void run() {
+        Log.d(RNCWebViewManager.TAG, "postMessage: " + message);
+        mTvWebViewManager.imperativePostMessage(Utils.convertStrToWritableArray(message));
+      }
+    });
+  }
+
+  @ReactMethod
+  public void injectJavascript(String jsCommand) {
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
+      @Override
+      public void run() {
+        Log.d(RNCWebViewManager.TAG, "injectJavascript: " + jsCommand);
+        mTvWebViewManager.imperativeInjectJavascript(Utils.convertStrToWritableArray(jsCommand));
       }
     });
   }
