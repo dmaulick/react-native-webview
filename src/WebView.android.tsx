@@ -37,10 +37,12 @@ import styles from './WebView.styles';
 
 const UIManager = NotTypedUIManager as RNCWebViewUIManagerAndroid;
 
-// Just to show we are not using this at all:
-// const RNCWebView = requireNativeComponent(
-//   'RNCWebView',
-// ) as typeof NativeWebViewAndroid;
+const RNCWebView = requireNativeComponent(
+  'RNCWebView',
+) as typeof NativeWebViewAndroid;
+
+const TVWebView = requireNativeComponent('TVWebView');
+
 const { resolveAssetSource } = Image;
 
 /**
@@ -51,7 +53,7 @@ let uniqueRef = 0;
 /**
  * Renders a native WebView.
  */
-class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
+class WebView extends React.Component<AndroidWebViewProps, State> {
   static defaultProps = {
     overScrollMode: 'always',
     javaScriptEnabled: true,
@@ -93,7 +95,7 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
     BatchedBridge.registerCallableModule(this.messagingModuleName, this);
   };
 
-  getCommands = () => UIManager.getViewManagerConfig('TVWebView').Commands;
+  getCommands = () => UIManager.getViewManagerConfig('RNCWebView').Commands;
 
   goForward = () => {
     UIManager.dispatchViewManagerCommand(
@@ -349,9 +351,7 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
       }
     }
 
-    const NativeWebView = (nativeConfig.component as typeof NativeWebViewAndroid);
-    // Againn just to show we are not using RNCWebView directly at all:
-      // = (nativeConfig.component as typeof NativeWebViewAndroid) || RNCWebView;
+    const NativeWebView = (nativeConfig.component as typeof NativeWebViewAndroid) || RNCWebView;
 
     this.onShouldStartLoadWithRequest = createOnShouldStartLoadWithRequest(
       this.onShouldStartLoadWithRequestCallback,
@@ -391,13 +391,14 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
   }
 }
 
-const TVWebView = requireNativeComponent('TVWebView');
+interface TVCachedWebViewProps extends AndroidWebViewProps {
+  isCached: boolean;
+}
 
-const WebView = React.forwardRef((props: AndroidWebViewProps, ref) => {
-  
+const TVCachedWebView = React.forwardRef(({ isCached, ...props}: TVCachedWebViewProps, ref) => {  
   // TODO: resolve this. could not get the component types to work correctly
   // @ts-ignore
-  return <WebViewInternal ref={ref} {...props} nativeConfig={{ component: TVWebView }} />
+  return <WebView ref={ref} {...props} nativeConfig={{ component: TVWebView, props: { isCached } }} />
 })
 
-export default WebView;
+export default TVCachedWebView;

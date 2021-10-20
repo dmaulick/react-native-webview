@@ -173,10 +173,10 @@ export default class App extends Component<Props, State> {
   }
 
   _eagerLoadWebView = () => {
-    NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource(HTML as ImageSourcePropType)); 
-    // NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({
-    //   uri: 'https://github.com/react-native-webview/react-native-webview',
-    // } as ImageSourcePropType));  
+    // NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource(HTML as ImageSourcePropType)); 
+    NativeModules.TVWebView.createCachedTVWebView(resolveAssetSource({
+      uri: 'https://github.com/react-native-webview/react-native-webview',
+    } as ImageSourcePropType));  
   };
 
   _runJSInWebView = () => {

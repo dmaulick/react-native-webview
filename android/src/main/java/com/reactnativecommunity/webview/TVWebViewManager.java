@@ -66,13 +66,14 @@ public class TVWebViewManager extends RNCWebViewManager {
     try {
       if (initialProps != null && initialProps.getBoolean("isCached", false)) {
         if (mCachedWebView == null) {
-          throw new Exception("Cached TVWebView is null.");
+          throw new Exception("createViewInstance -Cached TVWebView is null.");
         }
+        Log.d(TAG, "createViewInstance - successfully found cached view");
         return codePulledFromBaseViewManager(mCachedWebView, reactTag, reactContext, initialProps, stateWrapper);
       }
     } catch (Exception e) {
       // TODO: ideally we let exception bubble up
-      Log.d(TAG, "Exception thrown attempting to access cached WebView. Exception: " + e.toString());
+      Log.d(TAG, "createViewInstance- Exception thrown attempting to access cached WebView. Exception: " + e.toString());
     }
     WebView view = createViewInstance(reactContext); // Single line pulled from ViewManager.createViewInstance()
     return codePulledFromBaseViewManager(view, reactTag, reactContext, initialProps, stateWrapper);
