@@ -78,7 +78,7 @@ public class TVWebViewModule extends RNCWebViewModule {
           // initialize:
           mTvWebViewManager.setSource(webView, source);
           mTvWebViewManager.setJavaScriptEnabled(webView, true);
-//        mTvWebViewManager.setMessagingEnabled(webView, true);
+          mTvWebViewManager.setMessagingEnabled(webView, true);
         } catch (Exception e) {
           Log.d(RNCWebViewManager.TAG, "run: with exception: "+ e.toString());
         }
