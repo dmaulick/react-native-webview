@@ -351,7 +351,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
       }
     }
 
-    const NativeWebView 
+    const NativeWebView
       = (nativeConfig.component as typeof NativeWebViewAndroid) || RNCWebView;
 
     this.onShouldStartLoadWithRequest = createOnShouldStartLoadWithRequest(
