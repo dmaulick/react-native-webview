@@ -166,10 +166,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     };
   }
 
-  public RNCWebViewManager(WebViewConfig webViewConfig) {
-    mWebViewConfig = webViewConfig;
-  }
-
   @Override
   public String getName() {
     return REACT_CLASS;
@@ -473,11 +469,13 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     ((RNCWebView) view).setInjectedJavaScriptBeforeContentLoadedForMainFrameOnly(enabled);
   }
 
+  // check
   @ReactProp(name = "messagingEnabled")
   public void setMessagingEnabled(WebView view, boolean enabled) {
     ((RNCWebView) view).setMessagingEnabled(enabled);
   }
 
+  // check
   @ReactProp(name = "messagingModuleName")
   public void setMessagingModuleName(WebView view, String moduleName) {
     ((RNCWebView) view).setMessagingModuleName(moduleName);
@@ -765,7 +763,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   // TODO: tear down will depend on it it is the cached version
   public void imperativeDropViewInstance(WebView webView) {
-    ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
+    ((ReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
     mWebChromeClient = null;
   }
@@ -891,6 +889,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
     @Override
     public void onPageFinished(WebView webView, String url) {
+      Log.d(TAG, "onPageFinished: ");
       super.onPageFinished(webView, url);
 
       if (!mLastLoadFailed) {
@@ -904,6 +903,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+      Log.d(TAG, "onPageStarted: ");
       super.onPageStarted(webView, url, favicon);
       mLastLoadFailed = false;
 
@@ -1665,6 +1665,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
 
     public void onMessage(String message) {
+      Log.d(TAG, "onMessage blah: ");
       ReactContext reactContext = (ReactContext) this.getContext();
       RNCWebView mContext = this;
 
@@ -1769,6 +1770,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
        */
       @JavascriptInterface
       public void postMessage(String message) {
+        Log.d(TAG, "RNCWebViewBridge.postMessage: ");
         mContext.onMessage(message);
       }
     }

@@ -64,7 +64,6 @@ public class TVWebViewModule extends RNCWebViewModule {
   //@Nullable ReadableMap source
   @ReactMethod
   public void createCachedTVWebView(@Nullable ReadableMap source) {
-    Log.d(RNCWebViewManager.TAG, "TVWebViewModule.createCachedTVWebView");
 
     new Handler(Looper.getMainLooper()).post(new Runnable() {
       @Override
@@ -77,6 +76,7 @@ public class TVWebViewModule extends RNCWebViewModule {
         // initialize:
         mTvWebViewManager.setSource(webView, source);
         mTvWebViewManager.setJavaScriptEnabled(webView, true);
+//        mTvWebViewManager.setMessagingEnabled(webView, true);
       }
     });
   }

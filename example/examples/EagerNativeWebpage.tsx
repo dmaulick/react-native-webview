@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View} from 'react-native';
+import {View, Alert} from 'react-native';
 
 import WebView from 'react-native-webview';
 
@@ -14,8 +14,10 @@ export default class EagerNativeWebpage extends Component<Props, State> {
       <View style={{height: 400}}>
         <WebView
           isCached
-          // source={{uri: 'https://infinite.red'}}
           style={{width: '100%', height: '100%'}}
+          onMessage={(e: {nativeEvent: {data?: string}}) => {
+            Alert.alert('Message received from JS: ', e.nativeEvent.data);
+          }}
           // setSupportMultipleWindows={false}
         />
       </View>

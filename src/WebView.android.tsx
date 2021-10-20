@@ -89,11 +89,10 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
   messagingModuleName = `WebViewMessageHandler${uniqueRef+=1}`;
 
   componentDidMount = () => {
+    // check
     BatchedBridge.registerCallableModule(this.messagingModuleName, this);
   };
 
-  // TODO: This change RNCWebView -> TVWebView resolved an error on messages version of webview.
-  // Eventually should look into it
   getCommands = () => UIManager.getViewManagerConfig('TVWebView').Commands;
 
   goForward = () => {
@@ -266,6 +265,7 @@ class WebViewInternal extends React.Component<AndroidWebViewProps, State> {
   };
 
   onMessage = (event: WebViewMessageEvent) => {
+    console.log('webview.android.tsx - onMessage event: ', event)
     const { onMessage } = this.props;
     if (onMessage) {
       onMessage(event);

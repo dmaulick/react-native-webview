@@ -18,7 +18,6 @@ public class Utils {
     if (initialProps != null) {
       propsStr = initialProps.toString();
     }
-    Log.d(RNCWebViewManager.TAG, callSite + "#printInitialProps: "+ propsStr);
   }
 
   public static void printReadableMap(String callSite, @Nullable ReadableMap source) {

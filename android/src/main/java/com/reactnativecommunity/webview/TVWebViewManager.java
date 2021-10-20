@@ -1,7 +1,5 @@
 package com.reactnativecommunity.webview;
 
-import static com.reactnativecommunity.webview.Utils.printInitialProps;
-
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.util.Log;
@@ -65,8 +63,6 @@ public class TVWebViewManager extends RNCWebViewManager {
     @Nullable ReactStylesDiffMap initialProps,
     @Nullable StateWrapper stateWrapper) {
 
-    printInitialProps("createViewInstance", initialProps);
-
     try {
       if (initialProps != null && initialProps.getBoolean("isCached", false)) {
         if (mCachedWebView == null) {
@@ -86,7 +82,6 @@ public class TVWebViewManager extends RNCWebViewManager {
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
-    Log.d(TAG, "createViewInstance:  should not be called if eager init");
     TVWebView webView = new TVWebView(reactContext);
     return helpCreateViewInstance(reactContext, webView);
   }
@@ -111,7 +106,6 @@ public class TVWebViewManager extends RNCWebViewManager {
   @Override
   @ReactProp(name = "source")
   public void setSource(WebView view, @Nullable ReadableMap source) {
-    Utils.printReadableMap("TVWebViewManager#setSource", source);
     if (source != null) {
       super.setSource(view, source);
     }
