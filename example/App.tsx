@@ -13,6 +13,7 @@ import {
   ImageSourcePropType,
 } from 'react-native';
 
+import { INJECTED_JAVASCRIPT_COLORBACKGROUND_AND_POST_WEBVIEW_MESSAGE } from './Utils';
 import EagerNativeWebpage from './examples/EagerNativeWebpage';
 import Alerts from './examples/Alerts';
 import Scrolling from './examples/Scrolling';
@@ -149,11 +150,7 @@ export default class App extends Component<Props, State> {
   };
 
   _runJSInWebView = () => {
-    const INJECTED_JAVASCRIPT = `(function() {
-      document.body.style.backgroundColor = 'blue';
-      this.ReactNativeWebView.postMessage('useWebViewInjection|DONE|');
-    })();`;
-    NativeModules.TVWebView.injectJavascript(INJECTED_JAVASCRIPT);
+    NativeModules.TVWebView.injectJavascript(INJECTED_JAVASCRIPT_COLORBACKGROUND_AND_POST_WEBVIEW_MESSAGE);
   };
 
   _dropViewInstance = () => {

@@ -29,3 +29,10 @@ export const HTML = `<!DOCTYPE html>\n
     </script>
   </body>
 </html>`;
+
+export const INJECTED_JAVASCRIPT_COLORBACKGROUND_AND_POST_WEBVIEW_MESSAGE = `(function() {
+  document.body.style.backgroundColor = 'blue';
+  window.ReactNativeWebView.postMessage('useWebViewInjection|DONE|');
+  true
+})();`;
+
