@@ -93,6 +93,26 @@ public class TVWebViewManager extends RNCWebViewManager {
     return mCachedWebView;
   }
 
+  @Override
+  public void onDropViewInstance(WebView webView) {
+
+    if (mCachedWebView != null && webView != null && mCachedWebView.getId() == webView.getId()) {
+      Log.d(TAG, "onDropViewInstance called for mCachedWebView; not dropping so that can imperatively tear down." + mCachedWebView.getId() + "-" + webView.getId());
+      return;
+    }
+
+    if (mCachedWebView != null && webView != null) {
+      Log.d(TAG, "onDropViewInstance called with NON cached instance; calling default dropView logic." + mCachedWebView.getId() + "-" + webView.getId());
+    }
+
+    super.imperativeDropViewInstance(webView);
+  }
+
+  public void imperativeDropViewInstance() {
+    super.imperativeDropViewInstance(mCachedWebView);
+  }
+
+
   @ReactProp(name = "isCached")
   public void setIsCached(
     WebView view,

@@ -81,6 +81,17 @@ public class TVWebViewModule extends RNCWebViewModule {
     });
   }
 
+  @ReactMethod
+  public void imperativeDropViewInstance() {
+    new Handler(Looper.getMainLooper()).post(new Runnable() {
+      @Override
+      public void run() {
+        Log.d(RNCWebViewManager.TAG, "imperativeDropViewInstance: ");
+        mTvWebViewManager.imperativeDropViewInstance();
+      }
+    });
+  }
+
 
   // TODO: this is still not hooked up to the RN side
   @ReactMethod

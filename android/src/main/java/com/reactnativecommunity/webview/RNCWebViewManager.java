@@ -757,12 +757,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   public void onDropViewInstance(WebView webView) {
-    super.onDropViewInstance(webView);
     imperativeDropViewInstance(webView);
   }
 
   // TODO: tear down will depend on it it is the cached version
   public void imperativeDropViewInstance(WebView webView) {
+    super.onDropViewInstance(webView);
     ((ReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
     mWebChromeClient = null;

@@ -156,6 +156,9 @@ export default class App extends Component<Props, State> {
     NativeModules.TVWebView.injectJavascript(INJECTED_JAVASCRIPT);
   };
 
+  _dropViewInstance = () => {
+    NativeModules.TVWebView.imperativeDropViewInstance();
+  };
 
   render() {
     const {restarting, currentTest, hideContent} = this.state;
@@ -187,6 +190,15 @@ export default class App extends Component<Props, State> {
             style={styles.restartButton}
             activeOpacity={0.6}>
             <Text>Imperative Run JS</Text>
+          </TouchableOpacity>
+
+
+          <TouchableOpacity
+            testID="imperativeDropInstance"
+            onPress={this._dropViewInstance}
+            style={styles.restartButton}
+            activeOpacity={0.6}>
+            <Text>Imperative Drop Instance</Text>
           </TouchableOpacity>
 
         <TouchableOpacity
