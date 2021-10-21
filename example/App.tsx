@@ -11,6 +11,8 @@ import {
   NativeModules,
   Image,
   ImageSourcePropType,
+  DeviceEventEmitter,
+  Alert,
 } from 'react-native';
 
 import { INJECTED_JAVASCRIPT_COLORBACKGROUND_AND_POST_WEBVIEW_MESSAGE } from './Utils';
@@ -121,7 +123,6 @@ const TESTS = {
 
 interface Props {}
 interface State {restarting: boolean; currentTest: Object}
-
 export default class App extends Component<Props, State> {
   state = {
     restarting: false,
@@ -158,6 +159,16 @@ export default class App extends Component<Props, State> {
   };
 
   render() {
+
+
+    const onTestMessage = (event) => {
+      console.log('onTestMessageEvent: ', event);  
+      Alert.alert('onTestMessageEvent: ', JSON.stringify(event));
+    };
+
+    DeviceEventEmitter.addListener('onMessageEvent', onTestMessage);
+
+
     const {restarting, currentTest, hideContent} = this.state;
     return (
       <SafeAreaView style={styles.container}>

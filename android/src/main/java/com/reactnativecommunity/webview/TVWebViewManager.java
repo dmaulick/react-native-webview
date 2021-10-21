@@ -8,10 +8,13 @@ import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.ReactStylesDiffMap;
 import com.facebook.react.uimanager.StateWrapper;
 import com.facebook.react.uimanager.ThemedReactContext;
@@ -141,10 +144,30 @@ public class TVWebViewManager extends RNCWebViewManager {
     mCachedWebView.evaluateJavascriptWithFallback(args.getString(0));
   };
 
-
   protected static class TVWebView extends RNCWebView {
+
+    ReactContext mReactContext;
+
     public TVWebView(ReactContext reactContext) {
       super(reactContext);
+      mReactContext = reactContext;
+    }
+
+    @Override
+    public void onMessage(String message) {
+      super.onMessage(message);
+      sendOnMessageEvent(message);
+    }
+
+    private void sendOnMessageEvent(String message) {
+      // Create map for params
+      WritableMap payload = Arguments.createMap();
+      // Put data to map
+      payload.putString("message", message);
+      // Get EventEmitter from context and send event thanks to it
+      mReactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit("onMessageEvent", payload);
     }
   }
 }

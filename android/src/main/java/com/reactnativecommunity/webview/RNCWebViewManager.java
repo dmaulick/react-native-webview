@@ -1665,7 +1665,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
 
     public void onMessage(String message) {
-      Log.d(TAG, "onMessage blah: ");
       ReactContext reactContext = (ReactContext) this.getContext();
       RNCWebView mContext = this;
 
@@ -1706,7 +1705,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       WritableNativeArray params = new WritableNativeArray();
       params.pushMap(event);
 
-      mCatalystInstance.callFunction(messagingModuleName, method, params);
+      // We need this conditional because messagingModuleName is null prior to render. (added `mCatalystInstance != null` to get rid of an annoying warning)
+      // We don't really care if the onMessage event is emitted in multiple places.
+      // We just need this to avoid a crash.
+      // Sidenote: The related logic in onMessage is honestly just really messy and should be cleaned up.
+      if (mCatalystInstance != null && messagingModuleName != null) {
+        mCatalystInstance.callFunction(messagingModuleName, method, params);
+      } else {
+        Log.d(TAG, "sendDirectMessage: messagingModuleName was NULL");
+      }
     }
 
     protected void onScrollChanged(int x, int y, int oldX, int oldY) {
