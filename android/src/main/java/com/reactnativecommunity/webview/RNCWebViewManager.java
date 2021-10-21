@@ -1,5 +1,6 @@
 package com.reactnativecommunity.webview;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -9,9 +10,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.Manifest;
-import android.net.http.SslError;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Message;
@@ -30,9 +30,9 @@ import android.webkit.DownloadListener;
 import android.webkit.GeolocationPermissions;
 import android.webkit.HttpAuthHandler;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.SslErrorHandler;
-import android.webkit.PermissionRequest;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -51,11 +51,6 @@ import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewFeature;
 
 import com.facebook.common.logging.FLog;
-import com.facebook.react.modules.core.PermissionAwareActivity;
-import com.facebook.react.modules.core.PermissionListener;
-import com.facebook.react.views.scroll.ScrollEvent;
-import com.facebook.react.views.scroll.ScrollEventType;
-import com.facebook.react.views.scroll.OnScrollDispatchHelper;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.CatalystInstance;
 import com.facebook.react.bridge.LifecycleEventListener;
@@ -69,6 +64,8 @@ import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.common.MapBuilder;
 import com.facebook.react.common.build.ReactBuildConfig;
 import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.modules.core.PermissionAwareActivity;
+import com.facebook.react.modules.core.PermissionListener;
 import com.facebook.react.uimanager.SimpleViewManager;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.UIManagerModule;
@@ -76,15 +73,18 @@ import com.facebook.react.uimanager.annotations.ReactProp;
 import com.facebook.react.uimanager.events.ContentSizeChangeEvent;
 import com.facebook.react.uimanager.events.Event;
 import com.facebook.react.uimanager.events.EventDispatcher;
+import com.facebook.react.views.scroll.OnScrollDispatchHelper;
+import com.facebook.react.views.scroll.ScrollEvent;
+import com.facebook.react.views.scroll.ScrollEventType;
 import com.reactnativecommunity.webview.RNCWebViewModule.ShouldOverrideUrlLoadingLock.ShouldOverrideCallbackState;
-import com.reactnativecommunity.webview.events.TopLoadingErrorEvent;
 import com.reactnativecommunity.webview.events.TopHttpErrorEvent;
+import com.reactnativecommunity.webview.events.TopLoadingErrorEvent;
 import com.reactnativecommunity.webview.events.TopLoadingFinishEvent;
 import com.reactnativecommunity.webview.events.TopLoadingProgressEvent;
 import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
 import com.reactnativecommunity.webview.events.TopMessageEvent;
-import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
 import com.reactnativecommunity.webview.events.TopRenderProcessGoneEvent;
+import com.reactnativecommunity.webview.events.TopShouldStartLoadWithRequestEvent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -127,7 +127,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @ReactModule(name = RNCWebViewManager.REACT_CLASS)
 public class RNCWebViewManager extends SimpleViewManager<WebView> {
-  private static final String TAG = "RNCWebViewManager";
+  public static final String TAG = "RNCWebViewLogTag";
 
   public static final int COMMAND_GO_BACK = 1;
   public static final int COMMAND_GO_FORWARD = 2;
@@ -166,25 +166,33 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     };
   }
 
-  public RNCWebViewManager(WebViewConfig webViewConfig) {
-    mWebViewConfig = webViewConfig;
-  }
-
   @Override
   public String getName() {
     return REACT_CLASS;
   }
 
-  protected RNCWebView createRNCWebViewInstance(ThemedReactContext reactContext) {
-    return new RNCWebView(reactContext);
-  }
 
+  // Need this for class to be valid but we override it in subclass
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(ThemedReactContext reactContext) {
-    RNCWebView webView = createRNCWebViewInstance(reactContext);
+    RNCWebView webView = new RNCWebView(reactContext);
+    return helpCreateViewInstance(reactContext, webView);
+  }
+
+  // portable create logic that can be called for cached creation or normal creation
+  protected WebView helpCreateViewInstance(ReactContext reactContext, RNCWebView webView) {
+
+    // This code block was inline before, added configureRNCWebView to make easier on the eyess
     setupWebChromeClient(reactContext, webView);
     reactContext.addLifecycleEventListener(webView);
+    RNCWebViewModule module = getModule(reactContext);
+    configureRNCWebView(webView, module);
+
+    return webView;
+  }
+
+  private void configureRNCWebView(RNCWebView webView, RNCWebViewModule module) {
     mWebViewConfig.configWebView(webView);
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
@@ -212,8 +220,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     webView.setDownloadListener(new DownloadListener() {
       public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
         webView.setIgnoreErrFailedForThisURL(url);
-
-        RNCWebViewModule module = getModule(reactContext);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
 
@@ -247,8 +253,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       }
     });
-
-    return webView;
   }
 
   @ReactProp(name = "javaScriptEnabled")
@@ -465,11 +469,13 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     ((RNCWebView) view).setInjectedJavaScriptBeforeContentLoadedForMainFrameOnly(enabled);
   }
 
+  // check
   @ReactProp(name = "messagingEnabled")
   public void setMessagingEnabled(WebView view, boolean enabled) {
     ((RNCWebView) view).setMessagingEnabled(enabled);
   }
 
+  // check
   @ReactProp(name = "messagingModuleName")
   public void setMessagingModuleName(WebView view, String moduleName) {
     ((RNCWebView) view).setMessagingModuleName(moduleName);
@@ -700,24 +706,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         root.stopLoading();
         break;
       case COMMAND_POST_MESSAGE:
-        try {
-          RNCWebView reactWebView = (RNCWebView) root;
-          JSONObject eventInitDict = new JSONObject();
-          eventInitDict.put("data", args.getString(0));
-          reactWebView.evaluateJavascriptWithFallback("(function () {" +
-            "var event;" +
-            "var data = " + eventInitDict.toString() + ";" +
-            "try {" +
-            "event = new MessageEvent('message', data);" +
-            "} catch (e) {" +
-            "event = document.createEvent('MessageEvent');" +
-            "event.initMessageEvent('message', true, true, data.data, data.origin, data.lastEventId, data.source);" +
-            "}" +
-            "document.dispatchEvent(event);" +
-            "})();");
-        } catch (JSONException e) {
-          throw new RuntimeException(e);
-        }
+        imperativePostMessage((RNCWebView) root, args);
         break;
       case COMMAND_INJECT_JAVASCRIPT:
         RNCWebView reactWebView = (RNCWebView) root;
@@ -746,10 +735,35 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
   }
 
+  protected void imperativePostMessage(RNCWebView reactWebView, @Nullable ReadableArray args) {
+    try {
+      JSONObject eventInitDict = new JSONObject();
+      eventInitDict.put("data", args.getString(0));
+      reactWebView.evaluateJavascriptWithFallback("(function () {" +
+        "var event;" +
+        "var data = " + eventInitDict.toString() + ";" +
+        "try {" +
+        "event = new MessageEvent('message', data);" +
+        "} catch (e) {" +
+        "event = document.createEvent('MessageEvent');" +
+        "event.initMessageEvent('message', true, true, data.data, data.origin, data.lastEventId, data.source);" +
+        "}" +
+        "document.dispatchEvent(event);" +
+        "})();");
+    } catch (JSONException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public void onDropViewInstance(WebView webView) {
+    imperativeDropViewInstance(webView);
+  }
+
+  // TODO: tear down will depend on it it is the cached version
+  public void imperativeDropViewInstance(WebView webView) {
     super.onDropViewInstance(webView);
-    ((ThemedReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
+    ((ReactContext) webView.getContext()).removeLifecycleEventListener((RNCWebView) webView);
     ((RNCWebView) webView).cleanupCallbacksAndDestroy();
     mWebChromeClient = null;
   }
@@ -875,6 +889,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
     @Override
     public void onPageFinished(WebView webView, String url) {
+      Log.d(TAG, "onPageFinished: ");
       super.onPageFinished(webView, url);
 
       if (!mLastLoadFailed) {
@@ -888,6 +903,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+      Log.d(TAG, "onPageStarted: ");
       super.onPageStarted(webView, url, favicon);
       mLastLoadFailed = false;
 
@@ -1481,7 +1497,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
      * Activity Context is required for creation of dialogs internally by WebView
      * Reactive Native needed for access to ReactNative internal system functionality
      */
-    public RNCWebView(ThemedReactContext reactContext) {
+    // No reason to be themedContext:
+    public RNCWebView(ReactContext reactContext) {
       super(reactContext);
       this.createCatalystInstance();
       progressChangedFilter = new ProgressChangedFilter();
@@ -1688,7 +1705,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       WritableNativeArray params = new WritableNativeArray();
       params.pushMap(event);
 
-      mCatalystInstance.callFunction(messagingModuleName, method, params);
+      // We need this conditional because messagingModuleName is null prior to render. (added `mCatalystInstance != null` to get rid of an annoying warning)
+      // We don't really care if the onMessage event is emitted in multiple places.
+      // We just need this to avoid a crash.
+      // Sidenote: The related logic in onMessage is honestly just really messy and should be cleaned up.
+      if (mCatalystInstance != null && messagingModuleName != null) {
+        mCatalystInstance.callFunction(messagingModuleName, method, params);
+      } else {
+        Log.d(TAG, "sendDirectMessage: messagingModuleName was NULL");
+      }
     }
 
     protected void onScrollChanged(int x, int y, int oldX, int oldY) {
@@ -1752,6 +1777,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
        */
       @JavascriptInterface
       public void postMessage(String message) {
+        Log.d(TAG, "RNCWebViewBridge.postMessage: ");
         mContext.onMessage(message);
       }
     }

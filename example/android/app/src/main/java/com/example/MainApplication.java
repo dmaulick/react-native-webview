@@ -11,6 +11,7 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.soloader.SoLoader;
 import com.reactnativecommunity.webview.RNCWebViewPackage;
+import com.reactnativecommunity.webview.TVWebViewPackage;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -29,7 +30,8 @@ public class MainApplication extends Application implements ReactApplication {
           List<ReactPackage> packages = new PackageList(this).getPackages();
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
-          packages.add(new RNCWebViewPackage());
+          // packages.add(new RNCWebViewPackage());
+          packages.add(new TVWebViewPackage());
           return packages;
         }
 

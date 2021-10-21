@@ -40,6 +40,9 @@ const UIManager = NotTypedUIManager as RNCWebViewUIManagerAndroid;
 const RNCWebView = requireNativeComponent(
   'RNCWebView',
 ) as typeof NativeWebViewAndroid;
+
+const TVWebView = requireNativeComponent('TVWebView');
+
 const { resolveAssetSource } = Image;
 
 /**
@@ -88,10 +91,12 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   messagingModuleName = `WebViewMessageHandler${uniqueRef+=1}`;
 
   componentDidMount = () => {
+    // check
     BatchedBridge.registerCallableModule(this.messagingModuleName, this);
   };
 
-  getCommands = () => UIManager.getViewManagerConfig('RNCWebView').Commands;
+  // It looks like we are going to need to deal with this.
+  getCommands = () => UIManager.getViewManagerConfig('TVWebView').Commands;
 
   goForward = () => {
     UIManager.dispatchViewManagerCommand(
@@ -263,6 +268,7 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   };
 
   onMessage = (event: WebViewMessageEvent) => {
+    console.log('webview.android.tsx - onMessage event: ', event)
     const { onMessage } = this.props;
     if (onMessage) {
       onMessage(event);
@@ -387,4 +393,15 @@ class WebView extends React.Component<AndroidWebViewProps, State> {
   }
 }
 
-export default WebView;
+interface TVCachedWebViewProps extends AndroidWebViewProps {
+  isCached: boolean;
+}
+
+const TVCachedWebView = React.forwardRef(({ isCached, ...props}: TVCachedWebViewProps, ref) => {  
+  // TODO: resolve this. could not get the component types to work correctly
+  // @ts-ignore
+  return <WebView ref={ref} {...props} nativeConfig={{ component: TVWebView, props: { isCached } }} />
+})
+
+// Doing this so we can test how our extended version works with all other tests not cached.
+export default TVCachedWebView;
