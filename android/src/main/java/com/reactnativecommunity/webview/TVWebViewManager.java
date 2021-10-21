@@ -75,7 +75,6 @@ public class TVWebViewManager extends RNCWebViewManager {
         return codePulledFromBaseViewManager(mCachedWebView, reactTag, reactContext, initialProps, stateWrapper);
       }
     } catch (Exception e) {
-      // TODO: ideally we let exception bubble up
       Log.d(TAG, "createViewInstance- Exception thrown attempting to access cached WebView. Exception: " + e.toString());
     }
     WebView view = createViewInstance(reactContext); // Single line pulled from ViewManager.createViewInstance()
@@ -113,6 +112,7 @@ public class TVWebViewManager extends RNCWebViewManager {
 
   public void imperativeDropViewInstance() {
     super.imperativeDropViewInstance(mCachedWebView);
+    mCachedWebView = null;
   }
 
 
